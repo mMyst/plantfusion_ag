@@ -73,6 +73,7 @@ class Planter:
         noise_plant_positions=0.0,
         save_wheat_positions=False,
         seed=None,
+        positions_grid={},
     ) -> None:
         """Constructor, computes a global soil domain for the simulation
 
@@ -86,6 +87,8 @@ class Planter:
 
         # les lsystem l-egume sont par défaut en cm et le reste en m
         self.transformations: dict = {"scenes unit": {}}
+
+
         for i in range(len(self.indexer.global_order)):
             self.transformations["scenes unit"][i] = "m"
         for i in self.indexer.legume_index:
@@ -103,6 +106,11 @@ class Planter:
         elif generation_type == "row":
             self.__row(plant_density, inter_rows)
             self.type_domain = "mix"
+        
+        elif generation_type == "forced":
+            self.__forced(positions_grid)
+            self.type_domain = "mix"
+
 
     def __random(self, plant_density, xy_square_length):
         """Parameters for random generation type
@@ -206,12 +214,42 @@ class Planter:
         # only two species
         else:
             # 2 wheats ou combinaison avec 1 ou 2 autres FSPM
-            if len(self.indexer.wheat_names) > 1  or len(self.indexer.other_names) > 1:
+            if len(self.indexer.wheat_names) >= 1  or len(self.indexer.other_names) > 1:
                 self.transformations["translate"][0] = (0.0, -inter_rows, 0.0)
 
             # 2 legume
             elif len(self.indexer.legume_names) > 1:
                 self.transformations["translate"][1] = (0.0, inter_rows, 0.0)
+
+    def __forced(self,positions_grid):
+        """Parameters to force a preset carto into a legume type instance
+
+    
+        Parameters
+        ----------
+        positions : list of arrays
+        """        
+
+        self.legume_positions = [[] for i in range(len(self.indexer.legume_names))]
+        self.wheat_positions =  [[] for i in range(len(self.indexer.wheat_names))]
+        self.other_positions =  [[] for i in range(len(self.indexer.other_names))]
+
+        for i in self.indexer.legume_index:
+            self.legume_positions[i] = positions_grid['legume'][i]
+            self.number_of_plants[i] = len(self.legume_positions[i])
+            
+
+        for i in self.indexer.wheat_index:
+            self.wheat_positions[i] = positions_grid['wheat'][i]
+
+        for i in self.indexer.other_names:
+            self.other_positions[i] = positions_grid['other'][i]    
+
+        self.legume_typearrangement = "random8"
+        self.legume_nbcote=[8]
+        self.legume_cote = 100
+        self.legume_optdamier = 8
+        #self.domain = ((0.0, 0.0), (15,15))
 
     def __default_preconfigured(
         self, legume_cote={}, inter_rows=0.15, plant_density={1: 250}, xy_plane=None, translate=None, seed=None

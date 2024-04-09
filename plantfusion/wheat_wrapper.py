@@ -1436,3 +1436,30 @@ def passive_lighting(data, t, DOY, scene, lighting_wrapper, stems=None):
 
     data["PARa"].append(para)
     data["t"].append(t)
+
+
+def import_fertilization(file_name, sheet_name, column_name,wheather_file):
+    # Charger le fichier mgmt de l-egume
+    legume_mgmt = pandas.read_excel(file_name, sheet_name=sheet_name)
+
+    # Charger le fichier meteo de CNwheat
+    df2 = pandas.read_csv(wheather_file)
+
+      # Garder uniquement la première occurrence de chaque DOY dans df2
+    df2 = df2.drop_duplicates(subset='DOY', keep='first')
+
+    # Fusionner les deux fichiers Excel en utilisant la colonne DOY comme clé
+    df = pandas.merge(legume_mgmt, df2, on='DOY')
+
+    # Créer un dictionnaire à partir des colonnes t et column_name (NO3 ou NH4) du fichier fusionné
+    dico = df.set_index('t')[column_name].to_dict()
+
+    # Supprimer les valeurs nulles du dictionnaire
+    dico = {k: v for k, v in dico.items() if pandas.notna(v) and v != 0}
+
+     # Diviser tous les éléments du dictionnaire par 140*10^-6
+    for key in dico:
+        dico[key] /= 140*10**-6
+
+    return dico
+

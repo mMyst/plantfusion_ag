@@ -5,6 +5,7 @@
 """
 
 import os
+import datetime
 
 from lightvegemanager.LVM import LightVegeManager
 from plantfusion.utils import create_child_folder
@@ -88,6 +89,23 @@ class Light_wrapper(object):
             self.out_folder = os.path.join(os.path.normpath(out_folder), "light")
             create_child_folder(self.out_folder, "vtk")
             create_child_folder(self.out_folder, "plantgl")
+            """
+            self.out_folder = os.path.join(os.path.normpath(out_folder), "light\\vtk")
+            ...
+         
+            create_child_folder(self.out_folder, "Run" + str(datetime.date.today().strftime("%Y%m%d")))
+            try:
+                if not os.path.isdir(os.path.join(self.out_folder, "Run" + str(datetime.date.today().strftime("%Y%m%d")))):
+                    create_child_folder(self.out_folder, "Run" + str(datetime.date.today().strftime("%Y%m%d")))
+                else:
+                    count = 0
+                    while os.path.isdir(os.path.join(self.out_folder, "Run" + str(datetime.date.today().strftime("%Y%m%d"))+ "_" + str(count))):
+                        count += 1
+                    create_child_folder(self.out_folder, "Run" + str(datetime.date.today().strftime("%Y%m%d"))+"_"+str(count))
+            except:
+                print("Error creating folder")
+            """
+
 
         self.lightmodel = lightmodel
 

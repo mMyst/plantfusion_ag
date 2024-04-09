@@ -121,8 +121,27 @@ class L_egume_wrapper(object):
                 os.path.join(self.out_folder, "brut"),
                 planter,
             )
-        
         self.lstring = self.lsystem.axiom
+
+        if planter != None :
+            if planter.generation_type == 'forced':
+
+            #definit une carto et plante order
+
+                my_carto = planter.legume_positions[0]
+                #my_order = planter.order #liste d'identifiants plantes
+                my_order = [0,0,0]
+
+                nbplantes= len(my_carto)
+
+                self.set_axiom(nbplantes) 
+                self.lstring = self.lsystem.axiom
+
+                #mise a jour de forceCarto et forceOrder
+                self.lsystem.forceCarto = my_carto
+                self.lsystem.forceOrder = my_order
+                self.lsystem.nbplantes=nbplantes
+
         self.lsystem.opt_external_coupling = 1
         self.lsystem.opt_Nuptake = 0
 
@@ -138,6 +157,9 @@ class L_egume_wrapper(object):
 
         self.number_of_species = len(self.lsystem.tag_loop_inputs[17])
         self.number_of_plants = len(self.lsystem.tag_loop_inputs[3])
+        
+        #self.number_of_plants = nbplantes
+        #self.lsystem.tag_loop_inputs[11]=nbplantes
 
         if self.number_of_species > 1 :
             if self.indexer.legume_number_of_species[self.legume_index] != self.number_of_species:
@@ -897,6 +919,21 @@ class L_egume_wrapper(object):
             ((xmin, ymin), (xmax, ymax))
         """        
         self.domain = domain
+
+    def set_axiom(self, nbplantes):
+        """Setter of self.lsystem.AxialTree()
+
+        Parameters
+        ----------
+        nbplantes : int
+
+        """        
+        a = self.lsystem.AxialTree()
+        a.append(self.lsystem.attente(1))
+        for j in range(0, nbplantes):
+            a.append(self.lsystem.Sd(j))
+    
+        self.lsystem.axiom = a
 
 def passive_lighting(data, energy, DOY, scene, legume_wrapper, lighting_wrapper):
     """Run the lighting computation step without saving

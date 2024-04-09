@@ -23,12 +23,12 @@ def simulation(in_folder, out_folder, id_usm):
     planter = Planter(generation_type="default", indexer=indexer, legume_cote={plants_name : 40.}, legume_number_of_plants={plants_name : 64})
 
     legume = L_egume_wrapper(
-        name=plants_name, indexer=indexer, in_folder=in_folder, out_folder=out_folder, IDusm=id_usm, planter=planter
+        name=plants_name, indexer=indexer, ongletconfigfile=onglet,in_folder=in_folder, out_folder=out_folder, IDusm=id_usm, planter=planter
     )
 
     lighting = Light_wrapper(lightmodel="riri5", indexer=indexer, planter=planter, legume_wrapper=legume)
 
-    soil = Soil_wrapper(out_folder=out_folder, legume_wrapper=legume, legume_pattern=True)
+    soil = Soil_wrapper(out_folder=out_folder, ongletconfigfile=onglet, legume_wrapper=legume, legume_pattern=True)
 
     try:
         current_time_of_the_system = time.time()
@@ -66,6 +66,7 @@ def simulation(in_folder, out_folder, id_usm):
 if __name__ == "__main__":
     in_folder = "inputs_soil_legume"
     out_folder = "outputs/legume_default"
-    id_usm = 1711
+    onglet='LUCOS'
+    id_usm = 1
 
     simulation(in_folder, out_folder, id_usm)
