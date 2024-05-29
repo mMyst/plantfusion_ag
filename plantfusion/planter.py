@@ -74,6 +74,7 @@ class Planter:
         save_wheat_positions=False,
         seed=None,
         positions_grid={},
+        n_rows=None
     ) -> None:
         """Constructor, computes a global soil domain for the simulation
 
@@ -82,8 +83,10 @@ class Planter:
         self.plant_density = plant_density
         self.save_wheat_positions = save_wheat_positions
         self.noise_plant_positions = noise_plant_positions
+        self.positions_grid = positions_grid
         self.indexer = indexer
         self.number_of_plants: list = [0 for i in indexer.global_order]
+        self.domain=None
 
         # les lsystem l-egume sont par défaut en cm et le reste en m
         self.transformations: dict = {"scenes unit": {}}
@@ -111,6 +114,11 @@ class Planter:
             self.__forced(positions_grid)
             self.type_domain = "mix"
 
+        elif generation_type == 'row_forced':
+            self.domain, positions_grid=self.row_pattern(plant_density, n_rows, inter_rows)
+            self.__forced(positions_grid)
+            self.type_domain = 'mix'
+
 
     def __random(self, plant_density, xy_square_length):
         """Parameters for random generation type
@@ -133,7 +141,7 @@ class Planter:
         self.other_positions = [[] for i in range(len(self.indexer.other_names))]
 
         self.domain = ((0.0, 0.0), (xy_square_length, xy_square_length))
-
+        
         for name, density in plant_density.items():
             if name in self.indexer.legume_names:
                 # on réajuste le domaine pour avoir 64 plantes
@@ -180,25 +188,10 @@ class Planter:
         self.other_positions = [[] for i in range(len(self.indexer.other_names))]
 
         for name, density in plant_density.items():
-            if name in self.indexer.legume_names:
-                if self.indexer.legume_number_of_species[self.indexer.legume_names.index(name)] == 1:
-                    self.legume_typearrangement = "row4_sp1"
-                elif self.indexer.legume_number_of_species[self.indexer.legume_names.index(name)] == 2:
-                    self.legume_typearrangement = "row4"
 
-                # conversion m en cm
-                self.legume_cote = inter_rows * self.total_n_rows * 100
-                self.legume_nbcote.append(int(xy_square_length * xy_square_length * density / 2))
-                self.legume_optdamier = 2
-
-                # if self.indexer.legume_number_of_species[self.indexer.legume_names.index(name)] > 1:
-                indices = [index for index, item in enumerate(self.indexer.global_order) if item == name]
-                for i in indices:
-                    self.number_of_plants[i] = int(xy_square_length * xy_square_length * density)
-
-            else:
-                self.number_of_plants[self.indexer.global_order.index(name)] = int(
-                    xy_square_length * xy_square_length * density
+            #nb of plants per fspm instance, based on the sowing density and the size of the domain
+            self.number_of_plants[self.indexer.global_order.index(name)] = int(
+                xy_square_length * xy_square_length * density
                 )
 
         # each rows are generated on the same positions, we translate each plant specy scenes to create the final scene
@@ -221,6 +214,7 @@ class Planter:
             elif len(self.indexer.legume_names) > 1:
                 self.transformations["translate"][1] = (0.0, inter_rows, 0.0)
 
+
     def __forced(self,positions_grid):
         """Parameters to force a preset carto into a legume type instance
 
@@ -230,26 +224,114 @@ class Planter:
         positions : list of arrays
         """        
 
+        #set the size of the domain
+        if self.domain is None :
+
+            x_coords=[x for sublist in positions_grid.values() for x, y, z in sublist]
+            y_coords=[y for sublist in positions_grid.values() for x, y, z in sublist]
+
+            step_x = round((numpy.unique(x_coords)[1]-numpy.unique(x_coords)[0]),1)
+            step_y = round((numpy.unique(y_coords)[1]-numpy.unique(y_coords)[0]),1)
+
+            self.domain = ((0.0, 0.0), (max(x_coords)+step_x/2, max(y_coords)+step_y/2))
+
+
+
+        #on crée [[..],[..],..[..]] avec autant de [..] que d'instance de fspm de chaque type 
         self.legume_positions = [[] for i in range(len(self.indexer.legume_names))]
         self.wheat_positions =  [[] for i in range(len(self.indexer.wheat_names))]
         self.other_positions =  [[] for i in range(len(self.indexer.other_names))]
 
-        for i in self.indexer.legume_index:
-            self.legume_positions[i] = positions_grid['legume'][i]
-            self.number_of_plants[i] = len(self.legume_positions[i])
+        
+        #update positions_grid so that it is structured to work with multiple instance of each fspm 
+        #(-> then position_grid[name][i] should work)
+        for i in range(len(self.legume_positions)):
+            self.legume_positions[i] = positions_grid['legume']
+        self.number_of_plants[self.indexer.global_order.index('legume')] = len(self.legume_positions[i])
             
+            
+        for i in range(len(self.wheat_positions)):
+            self.wheat_positions[i] = positions_grid['wheat']
+        self.number_of_plants[self.indexer.global_order.index('wheat')] = len(self.wheat_positions[i])
 
-        for i in self.indexer.wheat_index:
-            self.wheat_positions[i] = positions_grid['wheat'][i]
+        for i in range(len(self.other_positions)):
+            self.other_positions[i] = positions_grid['other']    
 
-        for i in self.indexer.other_names:
-            self.other_positions[i] = positions_grid['other'][i]    
+        ### piste à creuser pour gestion auto du nb de plantes ?
+        #for name in self.indexer.global_order:
+        #   self.number_of_plants[self.indexer.global_order.index(name)]=
 
+        #legume parameters are initialised with default values that will get rewritten in legume-wrapper
         self.legume_typearrangement = "random8"
         self.legume_nbcote=[8]
         self.legume_cote = 100
         self.legume_optdamier = 8
-        #self.domain = ((0.0, 0.0), (15,15))
+
+        
+    def row_pattern(self, densities, n_rows, inter_rows, offset=None, noise=None):
+        # Créer un dictionnaire pour stocker les grilles de coordonnées de chaque catégorie de points
+        grids = {}
+
+
+        # Calculer la largeur du domaine en fonction de l'espacement entre les colonnes le plus élevé et du nombre de colonnes le plus élevé
+        # Calculer la largeur totale pour chaque catégorie
+        tot_width = {}
+        for name in n_rows.keys():
+            tot_width[name] = n_rows[name] * inter_rows[name] + (offset[name] if offset is not None and name in offset else inter_rows[name]/2)
+
+        # Trouver la catégorie ayant la plus grande largeur totale
+        max_cat = max(tot_width.items(), key=lambda x: x[1])[0]
+
+
+        max_inter_row = inter_rows[max_cat]
+        max_n_rows = n_rows[max_cat]
+        width = int((max_n_rows * max_inter_row))+max_inter_row/2
+        width= max(tot_width.values())
+
+        # Calculer les coordonnées min et max du domaine carré
+        x_min, y_min = 0, 0
+        x_max, y_max = width, width
+
+        # Parcourir les catégories de points
+        #pour offset automatique si on ne précise pas : le but est de décaller d'1 inter_rang à chaque nouvelle culture 
+        off=0
+        
+        for name, density in densities.items():
+
+            # Calculer le nombre de plantes dans le domaine en fonction de la densité
+            num_plants = int(width**2*density)
+            plant_spacing = width/int(num_plants/n_rows[name])
+
+
+
+            # Créer une grille de coordonnées pour la catégorie de points actuelle
+            grid = []
+            for ix in range(n_rows[name]):
+                for iy in range(int(num_plants/n_rows[name])):
+                    x =  ix * inter_rows[name] + (offset[name] if offset is not None and name in offset else inter_rows[name]/2+(inter_rows[name]/2*off))
+                    y =  plant_spacing*(iy+0.5)
+
+                    if noise is not None : 
+                        (x,y)=(
+                            random.uniform(x-noise[name],x+noise[name]),
+                            random.uniform(y-noise[name],y+noise[name])
+                        )
+                    grid.append((x,y,0))
+                
+                
+            off+=1    
+                
+
+            # Stocker la grille de coordonnées dans le dictionnaire
+            grids[name] = grid
+
+        #save domain and grid within planter
+        domain = ((x_min, y_min), (x_max, y_max))
+        coord_grid = grids
+
+        return (domain, coord_grid)
+        
+
 
     def __default_preconfigured(
         self, legume_cote={}, inter_rows=0.15, plant_density={1: 250}, xy_plane=None, translate=None, seed=None
@@ -488,14 +570,16 @@ class Planter:
         else:
             positions = []
 
-            inter_plants = (
+            inter_plants = (#space between plants within the row
                 2 * self.domain[1][1] / self.number_of_plants[self.indexer.wheat_index[indice_instance]]
+                #2 * length of the row / number of plants in this fspm instance, as indicated by the indexer
             )
             nrows = 2
             self.total_n_rows
 
-            # first row on left 1/2 interrow, then 1 out of 2 row is wheat
+            
             rows_y = [self.inter_rows * 1.5, ((self.total_n_rows / nrows) + 1.5) * self.inter_rows]
+            #rows y coordinates = [1st row is placed at a distance of 1.5 inter row from the edge of the domain, 2nd row is placed X inter-rows further, X being the ratio ]
             for y in rows_y:
                 for ix in range(int(self.number_of_plants[self.indexer.wheat_index[indice_instance]] / nrows)):
                     x = inter_plants * (0.5 + ix)
@@ -553,14 +637,16 @@ class Planter:
         else:
             positions = []
 
-            inter_plants = (
+            inter_plants = ( #space between plants within the row
                 2 * self.domain[1][1] / self.number_of_plants[self.indexer.wheat_index[indice_wheat_instance]]
+                #2 * length of the row / number of plants in this fspm instance, as indicated by the indexer
             )
             nrows = 2
             self.total_n_rows
 
             # first row on left 1/2 interrow, then 1 out of 2 row is wheat
             rows_y = [self.inter_rows * 1.5, ((self.total_n_rows / nrows) + 1.5) * self.inter_rows]
+            # y coordinates of the rows = 
             for y in rows_y:
                 for ix in range(int(self.number_of_plants[self.indexer.wheat_index[indice_wheat_instance]] / nrows)):
                     x = inter_plants * (0.5 + ix)
@@ -585,6 +671,65 @@ class Planter:
         )
 
         return generated_scene
+
+    def generate_forced_wheat(
+            self, adel_wheat, mtg, indice_wheat_instance=0, stem_name="stem", leaf_name="leaf", seed=None
+    ):
+        
+        """Generates wheat canopy based on position grid
+
+        Parameters
+        ----------
+        adel_wheat : AdelWheat
+            adel wheat object containing one wheat geometry
+        mtg : openalea.MTG
+            MTG of one wheat
+        indice_wheat_instance : int, optional
+            wheat ID in simulation (indexer.global_index), by default 0
+        stem_name : str, optional
+            stem tag in the plantgl.Scene, by default "stem"
+        leaf_name : str, optional
+            leaf tag in the plantgl.Scene, by default "leaf"
+        seed : int, optional
+            random seed, by default None
+
+        Returns
+        -------
+        a generated scene 
+        """        
+        var_leaf_inclination = 0.157
+        var_leaf_azimut = 1.57
+        var_stem_azimut = 0.157
+        if seed is not None:
+            s = seed
+        else:
+            s = 1234
+        random.seed(s)
+        numpy.random.seed(s)
+
+        self.save_wheat_positions=True
+
+        initial_scene = adel_wheat.scene(mtg)
+
+        positions = self.wheat_positions[indice_wheat_instance]
+
+        generated_scene = self.__generate_wheat_from_positions(
+            initial_scene,
+            mtg,
+            positions,
+            var_leaf_inclination,
+            var_leaf_azimut,
+            var_stem_azimut,
+            stem_name=stem_name,
+            leaf_name=leaf_name,
+        )
+
+        return generated_scene
+
+
+
+
+
 
     def create_heterogeneous_canopy(
         self,

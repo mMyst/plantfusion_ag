@@ -124,15 +124,19 @@ class L_egume_wrapper(object):
         self.lstring = self.lsystem.axiom
 
         if planter != None :
-            if planter.generation_type == 'forced':
+            if 'forced' in planter.generation_type:
 
             #definit une carto et plante order
 
-                my_carto = planter.legume_positions[0]
-                #my_order = planter.order #liste d'identifiants plantes
-                my_order = [0,0,0]
-
+                my_carto = planter.legume_positions[0] #a quoi fait référence 0 ? est ce qu'on peut remplacer par compréhension de l'id legume dans le planter
+                
+                #convert to cm (legume_positions should always be in m by default)
+                my_carto = [[value * 100 for value in sublist] for sublist in my_carto]
                 nbplantes= len(my_carto)
+            
+                my_order = [0]*nbplantes   
+
+                
 
                 self.set_axiom(nbplantes) 
                 self.lstring = self.lsystem.axiom
@@ -140,7 +144,7 @@ class L_egume_wrapper(object):
                 #mise a jour de forceCarto et forceOrder
                 self.lsystem.forceCarto = my_carto
                 self.lsystem.forceOrder = my_order
-                self.lsystem.nbplantes=nbplantes
+                self.lsystem.nbplantes=nbplantes #nécessaire ? 
 
         self.lsystem.opt_external_coupling = 1
         self.lsystem.opt_Nuptake = 0
@@ -156,7 +160,7 @@ class L_egume_wrapper(object):
         lstrings_temp = self.lsystem.derive(self.lstring, 0, 1)
 
         self.number_of_species = len(self.lsystem.tag_loop_inputs[17])
-        self.number_of_plants = len(self.lsystem.tag_loop_inputs[3])
+        self.number_of_plants = len(self.lsystem.tag_loop_inputs[3]) #nécessaire ? pourquoi tag loop inputs 3 ?
         
         #self.number_of_plants = nbplantes
         #self.lsystem.tag_loop_inputs[11]=nbplantes
