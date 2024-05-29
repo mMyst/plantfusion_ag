@@ -221,7 +221,7 @@ if __name__ == "__main__":
     in_folder_legume = "inputs_soil_legume"
     in_folder_wheat = "inputs_fspmwheat"
     out_folder = "outputs/full_coupling_LUCOS"
-    start_wheat='26/10/2021' 
+    start_wheat='17/12/2021' 
     simulation_length = 1500
     id_usm = 7
     writegeo = True

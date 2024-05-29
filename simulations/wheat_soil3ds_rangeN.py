@@ -102,8 +102,8 @@ def simulation(in_folder, out_folder, start_wheat=None, simulation_length=2500, 
 if __name__ == "__main__":
     in_folder = "inputs_fspmwheat"
     out_folder = "outputs/cnwheat_soil3ds"
-    start_wheat = "01/04/1999"
-    simulation_length = 1500
+    start_wheat = 0
+    simulation_length = 2500
     write_geo = True
 
     simulation(in_folder, out_folder, start_wheat, simulation_length=simulation_length, write_geo=write_geo)

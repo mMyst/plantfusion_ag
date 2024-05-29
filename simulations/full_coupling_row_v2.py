@@ -51,7 +51,7 @@ def simulation(
      ###NEW METHOD : FORCED PLANTER
     
         # Définir les paramètres d'entrée
-    densities = {wheat_name: 250, legume_name: 1000}
+    densities = {wheat_name: 250, legume_name: 300}
     n_rows = {wheat_name: 2, legume_name: 2}
     inter_rows = {wheat_name: 0.28, legume_name: 0.28}
     offset = {wheat_name: 0.15*2, legume_name: 0}
