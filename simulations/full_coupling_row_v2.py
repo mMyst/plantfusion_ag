@@ -11,7 +11,7 @@ import os
 
 
 def simulation(
-    in_folder_legume, in_folder_wheat, out_folder,start_wheat, simulation_length, id_usm, run_postprocessing=False, writegeo=False
+    in_folder_legume, in_folder_wheat, out_folder, start_wheat, simulation_length, id_usm, run_postprocessing=False, run_graphs=False, writegeo=False
 ):
     try:
         # Create target Directory
@@ -32,7 +32,7 @@ def simulation(
     #indexer.update_legume_several_species(legume_name, number_of_species=2)
 
     tillers_replications = {"T1": 0.5, "T2": 0.5, "T3": 0.5, "T4": 0.5}
-    #plant_density = {1: 250}
+    plant_density = {1: 250}
     sky = "turtle46"
     RERmax_vegetative_stages_example = {
         "elongwheat": {
@@ -41,22 +41,18 @@ def simulation(
     }
     senescwheat_timestep = 1
     light_timestep = 4
+
     """
     generation_type = "row"
     plant_density = {wheat_name : 150, legume_name : 250}
-    inter_rows = 0.14 # m
-    planter = Planter(generation_type=generation_type, 
-                      indexer=indexer, 
-                      plant_density=plant_density, 
-                      inter_rows=inter_rows, 
-                      save_wheat_positions=True)
+    inter_rows = 0.10 # m
+    planter = Planter(generation_type=generation_type, indexer=indexer, plant_density=plant_density, inter_rows=inter_rows, save_wheat_positions=True)
     """
-
-    ###NEW METHOD : FORCED PLANTER
+     ###NEW METHOD : FORCED PLANTER
     
         # Définir les paramètres d'entrée
-    densities = {wheat_name: 300, legume_name: 1000}
-    n_rows = {wheat_name: 4, legume_name: 4}
+    densities = {wheat_name: 250, legume_name: 1000}
+    n_rows = {wheat_name: 2, legume_name: 2}
     inter_rows = {wheat_name: 0.28, legume_name: 0.28}
     offset = {wheat_name: 0.15*2, legume_name: 0}
     noise = {wheat_name:0.001,legume_name:0.01}
@@ -71,15 +67,9 @@ def simulation(
 
 
     legume = L_egume_wrapper(
-        name=legume_name,
-        indexer=indexer,
-        in_folder=in_folder_legume,
-        out_folder=out_folder, 
-        ongletconfigfile='LUCOS',
-        IDusm=id_usm, 
-        planter=planter, 
-        caribu_scene=True
+        name=legume_name, indexer=indexer, in_folder=in_folder_legume, out_folder=out_folder, IDusm=id_usm, planter=planter, caribu_scene=True
     )
+    
 
     wheat = Wheat_wrapper(
         in_folder=in_folder_wheat,
@@ -90,7 +80,6 @@ def simulation(
         nitrates_uptake_forced=False,
         tillers_replications=tillers_replications,
         update_parameters_all_models=RERmax_vegetative_stages_example,
-        METEO_FILENAME='Lusignan_H_21-23.csv',
         SENESCWHEAT_TIMESTEP=senescwheat_timestep,
         LIGHT_TIMESTEP=light_timestep,
         SOIL_PARAMETERS_FILENAME="inputs_soil_legume/Parametres_plante_exemple.xls"
@@ -108,8 +97,7 @@ def simulation(
 
     soil = Soil_wrapper(in_folder=in_folder_legume, 
                         out_folder=out_folder, 
-                        IDusm=id_usm,
-                        ongletconfigfile='LUCOS',
+                        IDusm=id_usm, 
                         legume_wrapper=legume, 
                         planter=planter, 
                         opt_residu=0, 
@@ -157,9 +145,9 @@ def simulation(
         t_legume += 1
 
     # planter.number_of_plants = save_planter_nb_plants
-    
+
     lighting.i_vtk = lighting.i_vtk
-    for t_wheat in range(wheat.start_time,wheat.start_time +simulation_length, wheat.SENESCWHEAT_TIMESTEP):
+    for t_wheat in range(wheat.start_time, wheat.start_time+simulation_length, wheat.SENESCWHEAT_TIMESTEP):
         activate_legume = wheat.doy(t_wheat) != wheat.next_day_next_hour(t_wheat)
         daylight = (t_wheat % light_timestep == 0) and (wheat.PARi_next_hours(t_wheat) > 0)
 
@@ -213,17 +201,20 @@ def simulation(
 
 
     legume.end()
-    wheat.end(run_postprocessing=run_postprocessing)
+    wheat.end(run_postprocessing=run_postprocessing, run_graphs=run_graphs)
     soil.end()
 
 
 if __name__ == "__main__":
     in_folder_legume = "inputs_soil_legume"
     in_folder_wheat = "inputs_fspmwheat"
-    out_folder = "outputs/full_coupling_LUCOS"
-    start_wheat='26/10/2021' 
+    out_folder = "outputs/full_coupling_row_v2"
+    start_wheat='01/04/1999' 
     simulation_length = 1500
-    id_usm = 7
+    id_usm = 17113
     writegeo = True
+    run_postprocessing = False
+    run_graphs= False
 
-    simulation(in_folder_legume, in_folder_wheat, out_folder, start_wheat, simulation_length, id_usm, writegeo=writegeo)
+
+    simulation(in_folder_legume, in_folder_wheat, out_folder, start_wheat, simulation_length, id_usm, writegeo=writegeo, run_postprocessing=run_postprocessing, run_graphs=run_graphs)

@@ -26,14 +26,27 @@ def simulation(in_folder, onglet, out_folder, id_usm, write_geo=False):
 
 
     # lumiere avec caribu
+
+    ##planter using old legume puppeting method 
     #planter = Planter(indexer=index_log, legume_cote={plants_name : 40.}, legume_number_of_plants={plants_name : 64},inter_rows=0.14)
     
+    #new planter method under development 
     grid = {"legume": [[numpy.array([1.,2.,0.]), numpy.array([11.,2.,0.]), numpy.array([7.,2.,0.])]],
                 "wheat":[[numpy.array([1.,7.,0.]), numpy.array([11.,7.,0.]), numpy.array([7.,7.,0.])]],
                 "other":[[numpy.array([1.,12.,0.]), numpy.array([11.,12.,0.]), numpy.array([7.,12.,0.])]]
                 }
+    
 
-    planter = Planter(indexer=index_log, generation_type='forced',positions_grid=grid)
+    ###
+        # Définir les paramètres d'entrée
+    densities = {'blé': 150, 'luzerne': 1000,'orge':200}
+    n_rows = {'blé': 4, 'luzerne': 4,'orge':4}
+    inter_rows = {'blé': 0.15, 'luzerne': 0.15,'orge':0.15}
+    offset = {'blé': 0.15*2, 'luzerne': 0}
+    noise = {'blé':0.001,'luzerne':0.01,'orge':0.001}
+
+    #planter = Planter(indexer=index_log, generation_type='forced',positions_grid=grid)
+    planter = Planter(indexer=index_log, generation_type='row_forced',plant_density=densities)
 
 
     legume_caribu = L_egume_wrapper(

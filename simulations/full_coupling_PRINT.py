@@ -4,10 +4,15 @@ from plantfusion.light_wrapper import Light_wrapper
 from plantfusion.soil_wrapper import Soil_wrapper
 from plantfusion.indexer import Indexer
 from plantfusion.planter import Planter
+from plantfusion.utils import coord_from_image
+
+from PIL import Image
 
 import time
 import datetime
 import os
+
+
 
 
 def simulation(
@@ -53,20 +58,23 @@ def simulation(
     """
 
     ###NEW METHOD : FORCED PLANTER
-    
-        # Définir les paramètres d'entrée
-    densities = {wheat_name: 300, legume_name: 1000}
-    n_rows = {wheat_name: 4, legume_name: 4}
-    inter_rows = {wheat_name: 0.28, legume_name: 0.28}
-    offset = {wheat_name: 0.15*2, legume_name: 0}
-    noise = {wheat_name:0.001,legume_name:0.01}
 
+    image = Image.open('C:\\Users\\agrumel\\Pictures\\Saved Pictures\\inrae.jpeg')
+  
+    mod_img, img_coords = coord_from_image(image, n_colors=2, n_side=200,convert_mode='nb',scale=10**-3)
+    
+    # Rename the first key to 'legume'
+    old_key_l = list(img_coords.keys())[1]
+    old_key_w = list(img_coords.keys())[0]
+    img_coords['legume'] = img_coords.pop(old_key_l)
+    img_coords['wheat'] = img_coords.pop(old_key_w)
+
+
+    mod_img.show()
     
     planter = Planter(indexer=indexer, 
-                      generation_type='row_forced',
-                      plant_density=densities,
-                      n_rows=n_rows,
-                      inter_rows=inter_rows,
+                      generation_type='forced',
+                      positions_grid = img_coords,
                       save_wheat_positions=True)
 
 
@@ -103,7 +111,8 @@ def simulation(
         planter=planter, 
         indexer=indexer,
         legume_wrapper=legume,
-        writegeo=writegeo
+        writegeo=writegeo,
+        infinite=False
     )
 
     soil = Soil_wrapper(in_folder=in_folder_legume, 
@@ -220,10 +229,10 @@ def simulation(
 if __name__ == "__main__":
     in_folder_legume = "inputs_soil_legume"
     in_folder_wheat = "inputs_fspmwheat"
-    out_folder = "outputs/full_coupling_LUCOS"
-    start_wheat='26/10/2021' 
-    simulation_length = 1500
-    id_usm = 7
+    out_folder = "outputs/full_coupling_PRINT"
+    start_wheat='10/05/2021' 
+    simulation_length = 2500
+    id_usm = 1
     writegeo = True
 
     simulation(in_folder_legume, in_folder_wheat, out_folder, start_wheat, simulation_length, id_usm, writegeo=writegeo)

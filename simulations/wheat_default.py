@@ -8,7 +8,7 @@ import datetime
 import os
 
 
-def simulation(in_folder, out_folder, simulation_length, write_geo=False, run_postprocessing=False):
+def simulation(in_folder, out_folder,start_wheat=None, simulation_length=2500, write_geo=False, run_postprocessing=False, run_graphs=False):
     try:
         # Create target Directory
         os.mkdir(os.path.normpath(out_folder))
@@ -57,7 +57,11 @@ def simulation(in_folder, out_folder, simulation_length, write_geo=False, run_po
     )
 
     current_time_of_the_system = time.time()
-    for t in range(wheat.start_time, simulation_length, wheat.SENESCWHEAT_TIMESTEP):
+
+    if start_wheat is not None: 
+        wheat.start_time=wheat.meteo[wheat.meteo['Date']==start_wheat].index[0]
+
+    for t in range(wheat.start_time, wheat.start_time+simulation_length, wheat.SENESCWHEAT_TIMESTEP):
         if (t % light_timestep == 0) and (wheat.PARi_next_hours(t) > 0):
             wheat_input, stems = wheat.light_inputs(planter)
             lighting.run(scenes=[wheat_input], day=wheat.doy(t), hour=wheat.hour(t), parunit="micromol.m-2.s-1", stems=stems)
@@ -69,13 +73,16 @@ def simulation(in_folder, out_folder, simulation_length, write_geo=False, run_po
     print("\n" "Simulation run in {}".format(str(datetime.timedelta(seconds=execution_time))))
 
 
-    wheat.end(run_postprocessing=run_postprocessing)
+    wheat.end(run_postprocessing=run_postprocessing,run_graphs=run_graphs)
 
 
 if __name__ == "__main__":
     in_folder = "inputs_fspmwheat"
     out_folder = "outputs/cnwheat_default"
-    simulation_length = 2500
+    start_wheat='10/03/1999'
+    simulation_length = 1500
     write_geo = True
+    run_postprocessing=False
+    run_graphs=False
 
-    simulation(in_folder, out_folder, simulation_length, write_geo=write_geo)
+    simulation(in_folder, out_folder,start_wheat, simulation_length, write_geo=write_geo,run_postprocessing=run_postprocessing,run_graphs=run_graphs)

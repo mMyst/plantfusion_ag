@@ -32,6 +32,8 @@ from plantfusion.utils import create_child_folder, save_df_to_csv
 from plantfusion.planter import Planter
 from plantfusion.indexer import Indexer
 
+import matplotlib.pyplot as plt
+
 
 class Wheat_wrapper(object):
     """Wrapper for WheatFspm model
@@ -692,6 +694,10 @@ class Wheat_wrapper(object):
             scene_wheat = planter.generate_row_wheat(
                 self.adel_wheat, self.g, self.wheat_index, stem_name="StemElement", leaf_name="LeafElement1"
             )
+        elif 'forced' in self.generation_type:
+            scene_wheat = planter.generate_forced_wheat(
+                self.adel_wheat, self.g, self.wheat_index, stem_name="StemElement", leaf_name="LeafElement1"
+            )
 
         else:
             print("can't recognize positions generation type, choose between default, random and row")
@@ -949,7 +955,7 @@ class Wheat_wrapper(object):
                                 self.elements_all_data_list.append(elements_outputs)
                                 self.soils_all_data_list.append(soils_outputs)
 
-    def end(self, run_postprocessing=False):
+    def end(self, run_postprocessing=False, run_graphs=False):
         """Write output files and close submodel instances
 
         Parameters
@@ -1010,7 +1016,7 @@ class Wheat_wrapper(object):
                 postprocessing_df_dict[organs_postprocessing_file_basename],
                 postprocessing_df_dict[elements_postprocessing_file_basename],
                 postprocessing_df_dict[soils_postprocessing_file_basename],
-            ) = cnwheat_facade.CNWheatfacade.postprocessing(
+            ) = cnwheat_facade.CNWheatFacade.postprocessing(
                 axes_outputs_df=outputs_df_dict[self.AXES_OUTPUTS_FILENAME.split(".")[0]],
                 hiddenzone_outputs_df=outputs_df_dict[self.HIDDENZONES_OUTPUTS_FILENAME.split(".")[0]],
                 organs_outputs_df=outputs_df_dict[self.ORGANS_OUTPUTS_FILENAME.split(".")[0]],
@@ -1018,6 +1024,7 @@ class Wheat_wrapper(object):
                 soils_outputs_df=outputs_df_dict[self.SOILS_OUTPUTS_FILENAME.split(".")[0]],
                 delta_t=delta_t,
             )
+           
 
             for postprocessing_file_basename, postprocessing_filename in (
                 (axes_postprocessing_file_basename, self.AXES_POSTPROCESSING_FILENAME),
@@ -1030,6 +1037,21 @@ class Wheat_wrapper(object):
                 postprocessing_df_dict[postprocessing_file_basename].to_csv(
                     postprocessing_filepath, na_rep="NA", index=False, float_format="%.{}f".format(PRECISION)
                 )
+
+                if run_graphs:
+
+                    GRAPHS_DIRPATH = os.path.join(self.out_folder, "graphs")
+                     # --- Generate graphs from postprocessing files
+                    plt.ioff()
+                    df_elt = postprocessing_df_dict[elements_postprocessing_file_basename]
+                    df_SAM = pandas.read_csv(os.path.join(outputs_brut, self.AXES_OUTPUTS_FILENAME))
+
+                    cnwheat_facade.CNWheatFacade.graphs(axes_postprocessing_df=postprocessing_df_dict[axes_postprocessing_file_basename],
+                                                        hiddenzones_postprocessing_df=postprocessing_df_dict[hiddenzones_postprocessing_file_basename],
+                                                        organs_postprocessing_df=postprocessing_df_dict[organs_postprocessing_file_basename],
+                                                        elements_postprocessing_df=postprocessing_df_dict[elements_postprocessing_file_basename],
+                                                        soils_postprocessing_df=postprocessing_df_dict[soils_postprocessing_file_basename],
+                                                        meteo_data=self.meteo, graphs_dirpath=GRAPHS_DIRPATH)
 
         self.outputs_df_dict = outputs_df_dict
 
