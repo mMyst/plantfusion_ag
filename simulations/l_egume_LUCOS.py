@@ -20,37 +20,34 @@ def simulation(in_folder, onglet, out_folder, id_usm, write_geo=False):
     except FileExistsError:
         print("Directory ", os.path.normpath(out_folder), " already exists")
 
-   
-    plants_name = "legume"
-    index_log = Indexer(global_order=[plants_name], legume_names=[plants_name])
+    
+    legume_name = "legume"
+    sky = "turtle46"
+    #"inputs_soil_legume/sky_5.data"
+
+    index_log = Indexer(global_order=[legume_name], legume_names=[legume_name])
 
 
     # lumiere avec caribu
 
-    ##planter using old legume puppeting method 
-    #planter = Planter(indexer=index_log, legume_cote={plants_name : 40.}, legume_number_of_plants={plants_name : 64},inter_rows=0.14)
-    
-    #new planter method under development 
-    grid = {"legume": [[numpy.array([1.,2.,0.]), numpy.array([11.,2.,0.]), numpy.array([7.,2.,0.])]],
-                "wheat":[[numpy.array([1.,7.,0.]), numpy.array([11.,7.,0.]), numpy.array([7.,7.,0.])]],
-                "other":[[numpy.array([1.,12.,0.]), numpy.array([11.,12.,0.]), numpy.array([7.,12.,0.])]]
-                }
-    
-
     ###
-        # Définir les paramètres d'entrée
-    densities = {'blé': 150, 'luzerne': 1000,'orge':200}
-    n_rows = {'blé': 4, 'luzerne': 4,'orge':4}
-    inter_rows = {'blé': 0.15, 'luzerne': 0.15,'orge':0.15}
-    offset = {'blé': 0.15*2, 'luzerne': 0}
-    noise = {'blé':0.001,'luzerne':0.01,'orge':0.001}
+           # Définir les paramètres d'entrée
+    densities = {legume_name: 300}
+    n_rows = {legume_name: 2}
+    inter_rows = {legume_name: 0.14}
+    offset = {legume_name: 0}
+    noise = {legume_name:0.01}
 
-    #planter = Planter(indexer=index_log, generation_type='forced',positions_grid=grid)
-    planter = Planter(indexer=index_log, generation_type='row_forced',plant_density=densities)
+    
+    planter = Planter(indexer=index_log, 
+                      generation_type='row_forced',
+                      plant_density=densities,
+                      n_rows=n_rows,
+                      inter_rows=inter_rows)
 
 
     legume_caribu = L_egume_wrapper(
-        name=plants_name, 
+        name=legume_name, 
         indexer=index_log, 
         in_folder=in_folder, 
         ongletconfigfile=onglet,
@@ -66,7 +63,7 @@ def simulation(in_folder, onglet, out_folder, id_usm, write_geo=False):
         indexer=index_log, 
         planter=planter, 
         legume_wrapper=legume_caribu,
-        sky="inputs_soil_legume/sky_5.data",
+        sky=sky,
         writegeo=write_geo,
     )
     soil_caribu = Soil_wrapper(out_folder=out_folder, legume_wrapper=legume_caribu,  legume_pattern=True, planter=planter)
@@ -118,8 +115,8 @@ def simulation(in_folder, onglet, out_folder, id_usm, write_geo=False):
 if __name__ == "__main__":
     in_folder = "inputs_soil_legume"
     out_folder = "outputs/legume_LUCOS"
-    id_usm=6
-    write_geo=True
+    id_usm=7
+    write_geo=False
     onglet='LUCOS'
 
     simulation(in_folder, onglet, out_folder, id_usm, write_geo=write_geo)
