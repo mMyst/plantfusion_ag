@@ -22,7 +22,7 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=2500, w
     N_fertilizations = {2016: 357143, 2520: 1000000}
     tillers_replications = {"T1": 0.5, "T2": 0.5, "T3": 0.5, "T4": 0.5}
     plant_density = {1: 250}
-    sky = [4, 5, "soc"]
+    sky = "turtle46"
     RERmax_vegetative_stages_example = {
         "elongwheat": {
             "RERmax": {5: 3.35e-06, 6: 2.1e-06, 7: 2.0e-06, 8: 1.83e-06, 9: 1.8e-06, 10: 1.65e-06, 11: 1.56e-06}
@@ -79,8 +79,8 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=2500, w
 if __name__ == "__main__":
     in_folder = "inputs_fspmwheat"
     out_folder = "outputs/cnwheat_default"
-    start_wheat='10/03/1999'
-    simulation_length = 1500
+    start_wheat = None
+    simulation_length = 2500
     write_geo = True
     run_postprocessing=False
     run_graphs=False

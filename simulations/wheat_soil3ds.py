@@ -4,12 +4,13 @@ from plantfusion.soil_wrapper import Soil_wrapper
 from plantfusion.planter import Planter
 from plantfusion.indexer import Indexer
 
+
 import time
 import datetime
 import os
 
 
-def simulation(in_folder, out_folder, start_wheat=None, simulation_length=2500, write_geo=False, run_postprocessing=False):
+def simulation(in_folder, out_folder, start_wheat=None, simulation_length=2500, write_geo=False, run_postprocessing=False, rootdistribtype = 'homogeneous'):
     try:
         # Create target Directory
         os.mkdir(os.path.normpath(out_folder))
@@ -31,7 +32,7 @@ def simulation(in_folder, out_folder, start_wheat=None, simulation_length=2500, 
     plants_name = "wheat"
     index_log = Indexer(global_order=[plants_name], wheat_names=[plants_name])
 
-    planter = Planter(generation_type="default", indexer=index_log, inter_rows=0.14, plant_density=plant_density)
+    planter = Planter(generation_type="default", indexer=index_log, inter_rows=0.15, plant_density=plant_density)
 
     wheat = Wheat_wrapper(
         in_folder=in_folder,
@@ -44,7 +45,8 @@ def simulation(in_folder, out_folder, start_wheat=None, simulation_length=2500, 
         tillers_replications=tillers_replications,
         SENESCWHEAT_TIMESTEP=senescwheat_timestep,
         LIGHT_TIMESTEP=light_timestep,
-        SOIL_PARAMETERS_FILENAME="inputs_soil_legume/Parametres_plante_exemple.xls"
+        SOIL_PARAMETERS_FILENAME="inputs_soil_legume/Parametres_plante_exemple.xls",
+        rootdistribtype= rootdistribtype
     )
 
 
@@ -57,7 +59,7 @@ def simulation(in_folder, out_folder, start_wheat=None, simulation_length=2500, 
         writegeo=write_geo
     )
 
-    soil = Soil_wrapper(in_folder="inputs_soil_legume", out_folder=out_folder, IDusm=17113, planter=planter, save_results=True)
+    soil = Soil_wrapper(in_folder="inputs_soil_legume", out_folder=out_folder, IDusm=6050, planter=planter, save_results=True)
 
     current_time_of_the_system = time.time()
 
@@ -96,14 +98,17 @@ def simulation(in_folder, out_folder, start_wheat=None, simulation_length=2500, 
 
 
     wheat.end(run_postprocessing=run_postprocessing)
+
     soil.end()
+
 
 
 if __name__ == "__main__":
     in_folder = "inputs_fspmwheat"
     out_folder = "outputs/cnwheat_soil3ds"
-    start_wheat = "01/04/1999"
-    simulation_length = 1500
-    write_geo = True
+    start_wheat = None
+    simulation_length = 2500
+    write_geo = False
+    rootdistribtype = "bound"
 
-    simulation(in_folder, out_folder, start_wheat, simulation_length=simulation_length, write_geo=write_geo)
+    simulation(in_folder, out_folder, start_wheat, simulation_length=simulation_length, write_geo=write_geo, rootdistribtype=rootdistribtype)
