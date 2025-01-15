@@ -9,7 +9,7 @@ import datetime
 import os
 
 
-def simulation(in_folder, out_folder, start_wheat=None, simulation_length=2500, write_geo=False, run_postprocessing=False):
+def simulation(in_folder, out_folder, idusm = 17113, start_wheat=None, simulation_length=2500, write_geo=False, run_postprocessing=False):
     try:
         # Create target Directory
         os.mkdir(os.path.normpath(out_folder))
@@ -31,7 +31,7 @@ def simulation(in_folder, out_folder, start_wheat=None, simulation_length=2500, 
     plants_name = "wheat"
     index_log = Indexer(global_order=[plants_name], wheat_names=[plants_name])
 
-    planter = Planter(generation_type="default", indexer=index_log, inter_rows=0.14, plant_density=plant_density)
+    planter = Planter(generation_type="default", indexer=index_log, inter_rows=0.15, plant_density=plant_density)
 
     wheat = Wheat_wrapper(
         in_folder=in_folder,
@@ -57,7 +57,7 @@ def simulation(in_folder, out_folder, start_wheat=None, simulation_length=2500, 
         writegeo=write_geo
     )
 
-    soil = Soil_wrapper(in_folder="inputs_soil_legume", out_folder=out_folder, IDusm=17113, planter=planter, save_results=True)
+    soil = Soil_wrapper(in_folder="inputs_soil_legume", out_folder=out_folder, IDusm=idusm, ongletconfigfile='mixN', planter=planter, save_results=True)
 
     current_time_of_the_system = time.time()
 
@@ -101,9 +101,10 @@ def simulation(in_folder, out_folder, start_wheat=None, simulation_length=2500, 
 
 if __name__ == "__main__":
     in_folder = "inputs_fspmwheat"
-    out_folder = "outputs/cnwheat_soil3ds"
-    start_wheat = 0
-    simulation_length = 2500
+    idusm=100
+    out_folder = "outputs/cnwheat_soil3ds" + '_'+ str(idusm)+'N'
+    start_wheat = None #<=> blé semé au DOY 288 de l'an n-1 donc début de la simul au 17/12/1998
+    simulation_length = 2500 #3588 = 15/05 <=> doy 500 mais ça bug à 3307 donc on va aller à 3300 (dernière heure du 3/04) pour être sûr de ne pas avoir de pb
     write_geo = True
 
-    simulation(in_folder, out_folder, start_wheat, simulation_length=simulation_length, write_geo=write_geo)
+    simulation(in_folder, out_folder, idusm, start_wheat, simulation_length=simulation_length, write_geo=write_geo)
