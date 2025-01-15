@@ -243,25 +243,21 @@ class Planter:
         self.other_positions =  [[] for i in range(len(self.indexer.other_names))]
 
         
-        #update positions_grid so that it is structured to work with multiple instance of each fspm 
-        #(-> then position_grid[name][i] should work)
-        for i in range(len(self.legume_positions)):
-            self.legume_positions[i] = positions_grid['legume']
-        self.number_of_plants[self.indexer.global_order.index('legume')] = len(self.legume_positions[i])
-            
-            
-        for i in range(len(self.wheat_positions)):
-            self.wheat_positions[i] = positions_grid['wheat']
-        self.number_of_plants[self.indexer.global_order.index('wheat')] = len(self.wheat_positions[i])
+        for name, positions in positions_grid.items():
+            self.number_of_plants[self.indexer.global_order.index(name)] = len(positions)
 
-        for i in range(len(self.other_positions)):
-            self.other_positions[i] = positions_grid['other']    
+            if name in self.indexer.legume_names:
+                i = self.indexer.legume_names.index(name)
+                self.legume_positions[i] = positions
+            elif name in self.indexer.wheat_names:
+                i = self.indexer.wheat_names.index(name)
+                self.wheat_positions[i] = positions
+            else:
+                i = self.indexer.other_names.index(name)
+                self.other_positions[i] = positions
 
-        ### piste à creuser pour gestion auto du nb de plantes ?
-        #for name in self.indexer.global_order:
-        #   self.number_of_plants[self.indexer.global_order.index(name)]=
 
-        #legume parameters are initialised with default values that will get rewritten in legume-wrapper
+        #legume parameters are initialised with default values that will get rewritten in legume-wrapper. they are mandatory for L_egume to initalize.
         self.legume_typearrangement = "random8"
         self.legume_nbcote=[8]
         self.legume_cote = 100
@@ -318,8 +314,8 @@ class Planter:
                         )
                     grid.append((x,y,0))
                 
-                
-            off+=1    
+            
+            off+=1    #permet de décaler la position des rangs de off inter-rang
                 
 
             # Stocker la grille de coordonnées dans le dictionnaire
