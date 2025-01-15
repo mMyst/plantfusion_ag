@@ -563,6 +563,7 @@ class L_egume_wrapper(object):
             opt_stressGel,
             opt_residu,
             dxyz,
+            outf
         ) = self.lsystem.tag_loop_inputs
 
         if self.domain is None:
@@ -702,7 +703,8 @@ class L_egume_wrapper(object):
         list of float
             [dx, dy, dz] in cm
         """        
-        return self.lsystem.tag_loop_inputs[-1]
+    
+        return self.lsystem.tag_loop_inputs[42]
 
     def number_of_voxels(self):
         """Number of voxels in l-egume internal grid

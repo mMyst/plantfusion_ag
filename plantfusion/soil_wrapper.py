@@ -14,6 +14,7 @@ import soil3ds.IOxls as IOxls
 import soil3ds.IOtable as IOtable
 import legume.initialisation as initial
 
+
 from plantfusion.planter import Planter
 from plantfusion.utils import create_child_folder
 
@@ -224,7 +225,7 @@ class Soil_wrapper(object):
             plant interception capacity, one value per plant, by default []
         """        
         meteo_j = IOxls.extract_dataframe(
-            self.meteo, ["TmoyDay", "RG", "Et0", "Precip", "Tmin", "Tmax", "Tsol"], "DOY", val=day
+            self.meteo, ["DOY","TmoyDay", "RG", "Et0", "Precip", "Tmin", "Tmax", "Tsol"], "DOY", val=day
         )
         mng_j = IOxls.extract_dataframe(
             self.management, ["Coupe", "Irrig", "FertNO3", "FertNH4", "Hcut"], "DOY", val=day
@@ -358,6 +359,14 @@ class Soil_wrapper(object):
         """        
         try:
             pandas.DataFrame(self.data).to_csv(os.path.join(self.out_folder, "outputs_soil3ds.csv"))
+            #add saving of outHR results
+
+            #pandas.DataFrame(self.results[0].out_profil).to_csv(os.path.join(self.out_folder, "outputsHR.csv"))
+            outHRpath = os.path.join(self.out_folder, "outputsHR.csv")  
+            f = open(outHRpath, 'w')  
+            IOtable.ecriture_csv(self.results[0].out_profil, f) 
+            f.close()
+            
         except AttributeError:
             print("Soil save results not activated")
         finally:
