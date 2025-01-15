@@ -7,6 +7,7 @@ from plantfusion.planter import Planter
 from plantfusion.utils import coord_from_image
 
 from PIL import Image
+from pathlib import Path
 
 import time
 import datetime
@@ -16,8 +17,10 @@ import os
 
 
 def simulation(
-    in_folder_legume, in_folder_wheat, out_folder,start_wheat, simulation_length, id_usm, run_postprocessing=False, writegeo=False
-):
+    in_folder_legume, in_folder_wheat, out_folder, 
+    start_wheat, simulation_length, id_usm, 
+    run_postprocessing=False, writegeo=False, image_path = None
+    ):
     try:
         # Create target Directory
         os.mkdir(os.path.normpath(out_folder))
@@ -59,15 +62,19 @@ def simulation(
 
     ###NEW METHOD : FORCED PLANTER
 
-    image = Image.open('C:\\Users\\agrumel\\Pictures\\Saved Pictures\\inrae.jpeg')
+    image = Image.open(image_path)
   
-    mod_img, img_coords = coord_from_image(image, n_colors=2, n_side=200,convert_mode='nb',scale=10**-3)
+    mod_img, img_coords = coord_from_image(image, n_colors=3, n_side=200,convert_mode='nb',scale=10**-3)
     
     # Rename the first key to 'legume'
-    old_key_l = list(img_coords.keys())[1]
-    old_key_w = list(img_coords.keys())[0]
+    old_key_l = list(img_coords.keys())[1] #rouge foncé
+    old_key_w = list(img_coords.keys())[2] #rouge clair
     img_coords['legume'] = img_coords.pop(old_key_l)
     img_coords['wheat'] = img_coords.pop(old_key_w)
+
+    #delete any item that doesn't have a name in indexer.global_order to get rid of unused coordinates
+    img_coords = {k: v for k, v in img_coords.items() if k in indexer.global_order}
+
 
 
     mod_img.show()
@@ -225,14 +232,14 @@ def simulation(
     wheat.end(run_postprocessing=run_postprocessing)
     soil.end()
 
-
 if __name__ == "__main__":
     in_folder_legume = "inputs_soil_legume"
     in_folder_wheat = "inputs_fspmwheat"
-    out_folder = "outputs/full_coupling_PRINT"
-    start_wheat='10/05/2021' 
+    image_path = "C:\\Users\\agrumel\\Pictures\\Saved Pictures\\mobidiv2.png"
+    out_folder = "outputs/full_coupling_PRINT/"+ Path(image_path).stem
+    start_wheat='07/05/2021' 
     simulation_length = 2500
     id_usm = 1
     writegeo = True
 
-    simulation(in_folder_legume, in_folder_wheat, out_folder, start_wheat, simulation_length, id_usm, writegeo=writegeo)
+    simulation(in_folder_legume, in_folder_wheat, out_folder, start_wheat, simulation_length, id_usm, writegeo=writegeo, image_path = image_path)
