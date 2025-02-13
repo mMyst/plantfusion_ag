@@ -144,7 +144,9 @@ class L_egume_wrapper(object):
                 #mise a jour de forceCarto et forceOrder
                 self.lsystem.forceCarto = my_carto
                 self.lsystem.forceOrder = my_order
-                self.lsystem.nbplantes=nbplantes #nécessaire ? 
+                self.lsystem.nbplantes = nbplantes #nécessaire ? 
+                self.domain = planter.domain
+
 
         self.lsystem.opt_external_coupling = 1
         self.lsystem.opt_Nuptake = 0
@@ -172,8 +174,11 @@ class L_egume_wrapper(object):
             self.global_index = [index for index, item in enumerate(self.indexer.global_order) if item == self.name]
             self.legume_index = [index for index, item in enumerate(self.indexer.global_order) if item == self.name]
 
+        
+        self.domain = None
 
         if planter is not None:
+            self.domain = planter.domain
             if isinstance(self.global_index, list):
              self.index_in_global_plants = [sum(planter.number_of_plants[: self.global_index[0]]),
                                                     sum(planter.number_of_plants[: self.global_index[-1] + 1])]
@@ -186,7 +191,6 @@ class L_egume_wrapper(object):
         self.res_trans = None
         self.res_abs_i = None
         self.invar: dict = {}
-        self.domain = None
 
     def __load_lsystem(self, nameconfigfile, in_folder, ongletconfigfile, i, path_OUT, planter=None):
         """Prepare and run the ``lsystemInputOutput_usm`` function in order to create the lsystem

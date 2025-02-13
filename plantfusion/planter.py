@@ -260,7 +260,7 @@ class Planter:
         #legume parameters are initialised with default values that will get rewritten in legume-wrapper. they are mandatory for L_egume to initalize.
         self.legume_typearrangement = "random8"
         self.legume_nbcote=[8]
-        self.legume_cote = 100
+        self.legume_cote = (self.domain[1][0]-self.domain[0][0]) *100 #in cm
         self.legume_optdamier = 8
 
         
@@ -281,22 +281,22 @@ class Planter:
 
         max_inter_row = inter_rows[max_cat]
         max_n_rows = n_rows[max_cat]
-        width = int((max_n_rows * max_inter_row))+max_inter_row/2
-        width= max(tot_width.values())
-
+        common_offset= offset if offset is not None else max_inter_row/(2 * len(self.indexer.global_order) )
+        # ^ TEMPORAiRE : suppose que IR est le même pour toutes les cultures et que le nombre de rang est le même pour toutes les cultures
+        width = (max_n_rows * max_inter_row)
         # Calculer les coordonnées min et max du domaine carré
         x_min, y_min = 0, 0
         x_max, y_max = width, width
 
         # Parcourir les catégories de points
         #pour offset automatique si on ne précise pas : le but est de décaller d'1 inter_rang à chaque nouvelle culture 
-        off=0
+        rank=0 #va de 0 à nbr de cultures
         
         for name, density in densities.items():
 
             # Calculer le nombre de plantes dans le domaine en fonction de la densité
             num_plants = int(width**2*density)
-            plant_spacing = width/int(num_plants/n_rows[name])
+            plant_spacing = width/(num_plants/n_rows[name])
 
 
 
@@ -304,7 +304,7 @@ class Planter:
             grid = []
             for ix in range(n_rows[name]):
                 for iy in range(int(num_plants/n_rows[name])):
-                    x =  ix * inter_rows[name] + (offset[name] if offset is not None and name in offset else inter_rows[name]/2+(inter_rows[name]/2*off))
+                    x =  ix * inter_rows[name] + (offset[name] if offset is not None and name in offset else common_offset+2*common_offset*rank)
                     y =  plant_spacing*(iy+0.5)
 
                     if noise is not None : 
@@ -315,7 +315,7 @@ class Planter:
                     grid.append((x,y,0))
                 
             
-            off+=1    #permet de décaler la position des rangs de off inter-rang
+            rank+=1    #permet de décaler la position des rangs de rank inter-rang (à faire évoluer)
                 
 
             # Stocker la grille de coordonnées dans le dictionnaire
