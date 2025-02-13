@@ -12,7 +12,7 @@ import datetime
 
 
 
-def simulation(in_folder, onglet, out_folder, id_usm, write_geo=False):
+def simulation(in_folder, onglet, out_folder, id_usm, write_geo=False, geostep=1):
     try:
         # Create target Directory
         os.mkdir(os.path.normpath(out_folder))
@@ -57,6 +57,7 @@ def simulation(in_folder, onglet, out_folder, id_usm, write_geo=False):
         planter=planter
     
     )
+    
     lighting_caribu = Light_wrapper(
         lightmodel="caribu",
         out_folder=out_folder,
@@ -65,7 +66,9 @@ def simulation(in_folder, onglet, out_folder, id_usm, write_geo=False):
         legume_wrapper=legume_caribu,
         sky=sky,
         writegeo=write_geo,
+        geostep=geostep,
     )
+
     soil_caribu = Soil_wrapper(out_folder=out_folder, legume_wrapper=legume_caribu,  legume_pattern=True, planter=planter)
 
 
@@ -76,6 +79,11 @@ def simulation(in_folder, onglet, out_folder, id_usm, write_geo=False):
         
             legume_caribu.derive(t)
 
+            lighting_caribu.writegeo=False
+            if t%geostep == 0 :
+                lighting_caribu.writegeo=True 
+
+            
             ### CARIBU
             scene_legume = legume_caribu.light_inputs(elements="triangles")
             start = time.time()
@@ -116,7 +124,9 @@ if __name__ == "__main__":
     in_folder = "inputs_soil_legume"
     out_folder = "outputs/legume_LUCOS"
     id_usm=7
-    write_geo=False
+    write_geo=True
     onglet='LUCOS'
+    geostep=50
 
-    simulation(in_folder, onglet, out_folder, id_usm, write_geo=write_geo)
+    simulation(in_folder, onglet, out_folder, id_usm, write_geo=write_geo, geostep=geostep)
+

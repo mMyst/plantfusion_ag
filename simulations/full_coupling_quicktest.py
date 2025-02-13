@@ -13,7 +13,7 @@ import os
 def simulation(
     in_folder_legume, in_folder_wheat, out_folder,
     start_wheat, simulation_length, id_usm, 
-    run_postprocessing=False, writegeo=False, geostep=1 
+    run_postprocessing=False, writegeo=False, geostep=1
 ):
     try:
         # Create target Directory
@@ -134,10 +134,10 @@ def simulation(
     for t in range(nb_iter):
 
         legume.derive(t)
+        lightingwritegeo=False
 
-        lighting.writegeo=False
         if t%geostep == 0 :
-            lighting.writegeo=True 
+             lighting.writegeo=True 
 
         scene_legume = legume.light_inputs(elements="triangles")
         lighting.run(scenes=[scene_legume], day=legume.doy(), parunit="RG")
@@ -173,13 +173,13 @@ def simulation(
             if activate_legume:
                 legume.derive(t_legume)
 
-            lighting.writegeo=False
-            if t%geostep == 0 :
-                lighting.writegeo=True 
-
             wheat_input, stems = wheat.light_inputs(planter)
             legume_input = legume.light_inputs(elements="triangles")
             scenes = indexer.light_scenes_mgmt({wheat_name : wheat_input, legume_name : legume_input})
+
+            lighting.writegeo=False
+            if t%geostep == 0 :
+                lighting.writegeo=True 
 
             lighting.run(
                 scenes=scenes,
@@ -230,12 +230,13 @@ def simulation(
 if __name__ == "__main__":
     in_folder_legume = "inputs_soil_legume"
     in_folder_wheat = "inputs_fspmwheat"
-    out_folder = "outputs/full_coupling_LUCOS"
-    start_wheat='17/12/2021' 
+    out_folder = "outputs/full_coupling_quicktest"
+    start_wheat='07/05/2021' 
     simulation_length = 2500
     id_usm = 7
     writegeo = True
-    geostep = 50
+    geostep=50
+
     simulation(in_folder_legume, in_folder_wheat, out_folder, 
-               start_wheat, simulation_length, id_usm, 
-               writegeo=writegeo, geostep=geostep)
+               start_wheat, simulation_length, id_usm,
+                 writegeo=writegeo, geostep=geostep)

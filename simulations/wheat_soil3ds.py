@@ -8,9 +8,13 @@ from plantfusion.indexer import Indexer
 import time
 import datetime
 import os
+import math
 
 
-def simulation(in_folder, out_folder, start_wheat=None, simulation_length=2500, write_geo=False, run_postprocessing=False, rootdistribtype = 'homogeneous'):
+def simulation(in_folder, out_folder, 
+               start_wheat=None, simulation_length=2500, 
+               write_geo=False, run_postprocessing=False, geostep=1,
+               rootdistribtype = 'homogeneous',min_depth=None):
     try:
         # Create target Directory
         os.mkdir(os.path.normpath(out_folder))
@@ -66,22 +70,46 @@ def simulation(in_folder, out_folder, start_wheat=None, simulation_length=2500, 
     if start_wheat is not None: 
         wheat.start_time=wheat.meteo[wheat.meteo['Date']==start_wheat].index[0]
     
+    day_count = 0
+
     for t in range(wheat.start_time, wheat.start_time + simulation_length, wheat.SENESCWHEAT_TIMESTEP):
 
         if ((t % light_timestep == 0) and (wheat.PARi_next_hours(t) > 0)) or (wheat.doy(t) != wheat.next_day_next_hour(t)):
             wheat_input, stems = wheat.light_inputs(planter)
+
+            if  ((write_geo==True) and (t%geostep*light_timestep == 0 )) :
+                lighting.writegeo=True 
+            else:
+                lighting.writegeo=False
+            
+
             lighting.run(scenes=[wheat_input], day=wheat.doy(t), hour=wheat.hour(t), parunit="micromol.m-2.s-1", stems=stems)
             
             if ((t % light_timestep == 0) and (wheat.PARi_next_hours(t) > 0)) :
                 wheat.light_results(energy=wheat.energy(t), lighting=lighting)
 
             if (wheat.doy(t)  != wheat.next_day_next_hour(t) ) :
+                
+                day_count += 1
+
+                if wheat.rootdistribtype == "bound":
+                    min_depth = min_depth if min_depth is not None else 0.2 #m
+                    explo_rate = 0.01 #1cm par jour en m 
+
+                    rooting_depth = day_count * explo_rate + min_depth
+                    wheat.roots_bound = min(math.ceil(rooting_depth/soil.soil.dxyz[2][0]), len(soil.soil.dxyz[2])) #renvoie la couche jusqu'à laquelle les racines peuvent aller
+            
+
                 (
                     N_content_roots_per_plant,
                     roots_length_per_plant_per_soil_layer,
                     wheat_soil_parameters,
                     plants_light_interception,
                 ) = wheat.soil_inputs(soil, planter, lighting)
+
+
+                
+
                 soil.run(
                     wheat.doy(t, soil3ds=True),
                     [N_content_roots_per_plant],
@@ -105,10 +133,16 @@ def simulation(in_folder, out_folder, start_wheat=None, simulation_length=2500, 
 
 if __name__ == "__main__":
     in_folder = "inputs_fspmwheat"
-    out_folder = "outputs/cnwheat_soil3ds"
+    rootdistribtype = "bound" #"bound" or "homogeneous"
+    min_depth  = 0.75 #m
+    out_folder = "outputs/cnwheat_soil3ds/"+rootdistribtype+"/"+str(min_depth)+"m"
     start_wheat = None
     simulation_length = 2500
-    write_geo = False
-    rootdistribtype = "bound"
+    write_geo = True
+    geostep = 10 
+    
 
-    simulation(in_folder, out_folder, start_wheat, simulation_length=simulation_length, write_geo=write_geo, rootdistribtype=rootdistribtype)
+    simulation(in_folder, out_folder, 
+               start_wheat, simulation_length=simulation_length,
+                write_geo=write_geo, geostep=geostep, 
+                rootdistribtype=rootdistribtype, min_depth=min_depth)
