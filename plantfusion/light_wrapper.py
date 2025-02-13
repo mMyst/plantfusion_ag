@@ -74,6 +74,7 @@ class Light_wrapper(object):
         nb_angle_class=9,
         mu=1.0,
         writegeo=False,
+        geostep=1,
         out_folder="",
     ):
         """Constructor, create an instance of LightVegeManager
@@ -82,6 +83,7 @@ class Light_wrapper(object):
         self.transformations = planter.transformations
         self.indexer = indexer
         self.writegeo = writegeo
+        self.geostep = geostep
         self.compute_sensors = False
         self.direct=direct
         if writegeo:
@@ -262,6 +264,7 @@ class Light_wrapper(object):
                                 printvoxels=printvoxels, 
                                 virtual_sensors=self.compute_sensors, 
                                 sun=self.direct)
+            
             scene_plantgl= self.light.to_plantGL(lighting=True, 
                                                     printtriangles=True, 
                                                     printvoxels=printvoxels, 
@@ -279,7 +282,7 @@ class Light_wrapper(object):
                     os.path.join(self.out_folder, "plantgl", "scene_light_plantgl_" + str(self.i_vtk)) + ".bgeom"
                 )
 
-            self.i_vtk += 1
+            self.i_vtk += 1*self.geostep
 
     def results_organs(self):
         """Return lighting results at organ scale

@@ -153,7 +153,7 @@ class Soil_wrapper(object):
             self.parameters_SN = legume_wrapper.lsystem.par_SN
             self.soil_plants_parameters_bare_soil = IOxls.read_plant_param(legume_wrapper.lsystem.path_plante, "solnu")
 
-        self.soil_dimensions = [len(self.soil.dxyz[i]) for i in [2, 0, 1]]
+        self.soil_dimensions = [len(self.soil.dxyz[i]) for i in [2, 0, 1]] #soil_dimensions is stored as [nz, nx, ny]
 
         self.save_results = save_results
         if save_results:
