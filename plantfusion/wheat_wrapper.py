@@ -7,6 +7,7 @@
 import os
 import numpy
 import pandas
+import math
 import statsmodels.api as sm
 
 from alinea.adel.adel_dynamic import AdelDyn
@@ -1581,7 +1582,7 @@ class Wheat_wrapper(object):
 
         return N_content_roots.values[0]
 
-    def compute_roots_length(self, soil_wrapper, planter:Planter):
+    def compute_roots_length(self, soil_wrapper, planter:Planter, t=None):
         """Compute roots length from roots mass
 
         Note
@@ -1609,7 +1610,6 @@ class Wheat_wrapper(object):
 
         positions = planter.wheat_positions[self.wheat_index]
         self.compute_SRL_wheat(roots_mass[0])
-        self.compute_root_profile(roots_mass[0])
 
         # longueur spécifique x masse en gramme/nbplantes
         ls_roots = []
@@ -1622,7 +1622,7 @@ class Wheat_wrapper(object):
 
         return ls_roots
 
-    def rootsdistribution(self, roots_mass, ix, iy, soil_wrapper, rootdistribtype="homogeneous"):
+    def rootsdistribution(self, roots_mass, ix, iy, soil_wrapper, rootdistribtype="homogeneous", t=None):
         """Distributes roots length in soil voxels.
 
         Note
@@ -1655,8 +1655,15 @@ class Wheat_wrapper(object):
             roots_length_per_voxel[:, ix, iy] = (roots_mass * self.SRL) / soil_wrapper.soil_dimensions[0]
         
         if rootdistribtype == "bound":
-            # TODO: à implémenter si on veut une distribution en fonction de la profondeur d'enracinment
-            roots_length_per_voxel[:, :, :] = (roots_mass * self.SRL) / (self.rooting_depth*soil_wrapper.soil_dimensions[1]*soil_wrapper.soil_dimensions[2])
+            for iz in range (self.roots_bound-1):
+                roots_length_per_voxel[iz, :, :] = (roots_mass * self.SRL) / (self.roots_bound*soil_wrapper.soil_dimensions[1]*soil_wrapper.soil_dimensions[2])
+
+        if rootdistribtype == "profile":
+            #pas fonctionnel, en l'état dilue les racines jusqu'à profondeur max fixe de 150cm
+            self.compute_root_profile(roots_mass,soil_wrapper) #computes self.root_profile, 1D array of length soil_wrapper.soil_dimensions[0] (z) containing the root mass per layer
+         
+            for iz in range(soil_wrapper.soil_dimensions[0]):
+                roots_length_per_voxel[iz, :, :] = self.root_profile[iz] * self.SRL / (soil_wrapper.soil_dimensions[1]*soil_wrapper.soil_dimensions[2])
         
         return roots_length_per_voxel
 
@@ -1678,19 +1685,35 @@ class Wheat_wrapper(object):
         else:
             self.SRL = 200
 
-    def compute_root_profile(self, mass_roots):
+    def compute_root_profile(self, roots_mass, soil_wrapper):
         """Dynamic rooting depth according to roots mass
 
-        Here, rooting depth is linear following roots mass
+        root profile from mass using eq from Fan et al. 2016 
 
         Parameters
         ----------
         mass_roots : float
             roots mass in g
         """
+        da = 17.2
+        c = -1.286 
+        dmax = 150.4
 
-        self.rooting_depth = 5 # 5e couche de voxels à préciser plus tard avec une vraie fonction basée sur de la biblio ici c'est juste pour tester
+        #dmax = 1 * day +20 
 
+        self.root_profile = numpy.zeros(soil_wrapper.soil_dimensions[0])
+
+        for iz in range(len(self.root_profile)):
+            d= (iz+1)*soil_wrapper.soil.dxyz[2][0] # depth in cm (iz+1 because iz starts at 0)
+            self.root_profile[iz] = (1 / (1 + (d/da)**c) + (1 - 1/(1+ (dmax/da)**c))*(d/dmax) ) * roots_mass 
+            # Calculate the root mass at depth d for a total root mass of roots_mass
+
+            # At this stage, root_profile is cumulative; we need to convert it to incremental for root distribution in soil layers
+
+            # Convert the cumulative list to incremental => root mass in each soil layer
+        for iz in range(len(self.root_profile) - 1, 0, -1):
+            self.root_profile[iz] = self.root_profile[iz] - self.root_profile[iz - 1]
+         
 
     def compute_plants_light_interception(self, plant_leaf_area, soil_energy):
         """Computes light capacity interception for each plant
