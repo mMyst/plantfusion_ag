@@ -287,16 +287,16 @@ if __name__ == '__main__':
 
     for N in N_values :
             
-        path = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\soil3DS_init60N_v2\cnwheat_soil3ds_'+str(N)+r'N\wheat'
+        path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\bound\0.2m\wheat'
 
         POSTPROCESSING = os.path.join(path, 'postprocessing')
         GRAPHS = os.path.join(path, 'graphs')
 
         # Path Control
-        dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default\wheat'
+        #dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default\wheat'
         
-        #'C:\Users\agrumel\Documents\Données\Données Marion\Soumission_JXBot'
-        #'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default\wheat'
+        dirpath_control = r'C:\Users\agrumel\Documents\Données\Données Marion\Soumission_JXBot'
+        #dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default\wheat'
         
         POSTPROCESSING_CONTROL = os.path.join(dirpath_control, 'postprocessing')
 
@@ -330,7 +330,7 @@ if __name__ == '__main__':
 
 
         # plot graphs
-        with PdfPages('Comparison_CNdefault_vs_soil3ds_'+str(N)+'N.pdf') as pdf:
+        with PdfPages('Comparison_soild3ds_0.2m_vs_Marion.pdf') as pdf:
             # phloem
             phloem(df_current_organs, df_control_organs, tmin, tmax)
 
