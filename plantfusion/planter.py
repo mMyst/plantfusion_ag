@@ -74,7 +74,10 @@ class Planter:
         save_wheat_positions=False,
         seed=None,
         positions_grid={},
-        n_rows=None
+        n_rows=None, 
+        n_cols=None, 
+        cell_size=None, 
+        col_pattern=None
     ) -> None:
         """Constructor, computes a global soil domain for the simulation
 
@@ -116,6 +119,11 @@ class Planter:
 
         elif generation_type == 'row_forced':
             self.domain, positions_grid=self.row_pattern(plant_density, n_rows, inter_rows)
+            self.__forced(positions_grid)
+            self.type_domain = 'mix'
+
+        elif generation_type == 'grid_forced':
+            self.domain, positions_grid=self.grid_pattern(n_cols, n_rows, cell_size, col_pattern , noise=None) #n_cols, n_rows, cell_size, pattern , noise=None
             self.__forced(positions_grid)
             self.type_domain = 'mix'
 
@@ -244,17 +252,18 @@ class Planter:
 
         
         for name, positions in positions_grid.items():
-            self.number_of_plants[self.indexer.global_order.index(name)] = len(positions)
+            if name in self.indexer.global_order:
+                self.number_of_plants[self.indexer.global_order.index(name)] = len(positions)
 
-            if name in self.indexer.legume_names:
-                i = self.indexer.legume_names.index(name)
-                self.legume_positions[i] = positions
-            elif name in self.indexer.wheat_names:
-                i = self.indexer.wheat_names.index(name)
-                self.wheat_positions[i] = positions
-            else:
-                i = self.indexer.other_names.index(name)
-                self.other_positions[i] = positions
+                if name in self.indexer.legume_names:
+                    i = self.indexer.legume_names.index(name)
+                    self.legume_positions[i] = positions
+                elif name in self.indexer.wheat_names:
+                    i = self.indexer.wheat_names.index(name)
+                    self.wheat_positions[i] = positions
+                else:
+                    i = self.indexer.other_names.index(name)
+                    self.other_positions[i] = positions
 
 
         #legume parameters are initialised with default values that will get rewritten in legume-wrapper. they are mandatory for L_egume to initalize.
@@ -328,6 +337,51 @@ class Planter:
         return (domain, coord_grid)
         
 
+
+    def grid_pattern(self, n_cols= 20, n_rows= 20, cell_size = 0.05, col_pattern = ("wheat","empty","wheat"), noise=None):
+        # Créer un dictionnaire pour stocker les grilles de coordonnées de chaque catégorie de points
+        grids = {}
+
+        length = n_cols*cell_size
+        width = n_rows*cell_size 
+        # Calculer les coordonnées min et max du domaine 
+        x_min, y_min = 0, 0
+        x_max, y_max = length, width
+
+        grids = {name: [] for name in col_pattern}
+        
+        for name in col_pattern:
+
+            # Créer une grille de coordonnées pour la catégorie de points actuelle
+            
+            for col_id in range(n_cols):
+                grid_col = []
+                x =  cell_size/2 + col_id*cell_size
+                for row_id in range(n_rows):
+                    y =  cell_size/2 + row_id*cell_size
+                    if noise is not None : 
+                        (x,y)=(
+                            random.uniform(x-noise[name],x+noise[name]),
+                            random.uniform(y-noise[name],y+noise[name])
+                        )
+                    grid_col.append((x,y,0))
+
+                modulo =col_id%len(col_pattern)
+                name = col_pattern[modulo] 
+
+                # Stocker la grille de coordonnées dans le dictionnaire
+                grids[name].extend(grid_col)
+            
+               
+
+            
+
+        #save domain and grid within planter
+        domain = ((x_min, y_min), (x_max, y_max))
+        coord_grid = grids
+
+        return (domain, coord_grid)
+        
 
     def __default_preconfigured(
         self, legume_cote={}, inter_rows=0.15, plant_density={1: 250}, xy_plane=None, translate=None, seed=None
