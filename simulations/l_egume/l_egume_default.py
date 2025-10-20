@@ -28,7 +28,8 @@ def simulation(in_folder, out_folder, id_usm):
 
     lighting = Light_wrapper(lightmodel="riri5", indexer=indexer, planter=planter, legume_wrapper=legume)
 
-    soil = Soil_wrapper(out_folder=out_folder, ongletconfigfile=onglet, legume_wrapper=legume, legume_pattern=True)
+    soil = Soil_wrapper(out_folder=out_folder, ongletconfigfile=onglet, legume_wrapper=legume, legume_pattern=True, IDusm=id_usm,
+                        save_results=True) 
 
     try:
         current_time_of_the_system = time.time()
@@ -61,12 +62,13 @@ def simulation(in_folder, out_folder, id_usm):
         print("\n" "Simulation run in {}".format(str(datetime.timedelta(seconds=execution_time))))
 
         legume.end()
+        soil.end()
 
 
 if __name__ == "__main__":
     in_folder = "inputs_soil_legume"
-    out_folder = "outputs/legume_default"
-    onglet='LUCOS'
-    id_usm = 1
+    out_folder = "outputs/legume_default_temporary"
+    onglet='exemple'
+    id_usm = 6050
 
     simulation(in_folder, out_folder, id_usm)

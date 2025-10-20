@@ -174,7 +174,7 @@ def simulation(
                 legume.derive(t_legume)
 
             lighting.writegeo=False
-            if t%geostep == 0 :
+            if t_legume%geostep == 0 :
                 lighting.writegeo=True 
 
             wheat_input, stems = wheat.light_inputs(planter)

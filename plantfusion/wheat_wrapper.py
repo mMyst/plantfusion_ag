@@ -1823,7 +1823,7 @@ class Wheat_wrapper(object):
         t : int
             timestep
         soil3ds : bool, optional
-            doy in soil3ds meteo file don't reset at each year, it keeps increasing, by default False
+            doy in soil3ds meteo file doesn't reset each year, it keeps increasing, by default False
 
         Returns
         -------

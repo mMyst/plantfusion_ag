@@ -37,5 +37,6 @@ def w_postpro(out_folder, run_postprocessing=True, run_graphs=True):
     wheat.end(simu_ran=False, run_postprocessing=run_postprocessing, run_graphs=run_graphs)
 
 if __name__ == "__main__":
-    out_folder = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\bound\0.2m'
+    #default folder : r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_temp'
+    out_folder = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default'
     w_postpro(out_folder, run_postprocessing=True, run_graphs=True)

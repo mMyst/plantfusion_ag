@@ -78,7 +78,7 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=2500, w
 
 if __name__ == "__main__":
     in_folder = "inputs_fspmwheat"
-    out_folder = "outputs/cnwheat_default_temp"
+    out_folder = "outputs/cnwheat_default"
     start_wheat = None
     simulation_length = 2500
     write_geo = True
