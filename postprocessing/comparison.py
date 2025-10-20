@@ -283,69 +283,75 @@ def leaf_emergence(df_current_hz, df_control_hz):
 
 if __name__ == '__main__':
     # get current directory
-    N_values= [0,30,50,100,160,250,350,450]
+    # path = os.getcwd()
+    
+    #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_temp\wheat'
+    #path = r'C:\Users\agrumel\Code\Python_Ecophy\WheatFspm\fspm-wheat\example\Vegetative_stages'
+    #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\bound\0.2m\wheat'
+    path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\homogeneous\classic\wheat'
 
-    for N in N_values :
-            
-        path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\bound\0.2m\wheat'
+    POSTPROCESSING = os.path.join(path, 'postprocessing')
+    GRAPHS = os.path.join(path, 'graphs')
 
-        POSTPROCESSING = os.path.join(path, 'postprocessing')
-        GRAPHS = os.path.join(path, 'graphs')
+    # Path Control
+    
+    #Version Soumission Marion
+    #dirpath_control = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\Données Marion\Soumission_JXBot'
 
-        # Path Control
-        #dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default\wheat'
-        
-        dirpath_control = r'C:\Users\agrumel\Documents\Données\Données Marion\Soumission_JXBot'
-        #dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default\wheat'
-        
-        POSTPROCESSING_CONTROL = os.path.join(dirpath_control, 'postprocessing')
+    #Simul CNWheat Plantfusion
+    #dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_temp\wheat'
 
-            # Axes
-        df_current_axes = pd.read_csv(os.path.join(POSTPROCESSING, 'axes_postprocessing.csv'))
-        df_current_axes = df_current_axes[df_current_axes['axis'] == 'MS']
-        df_control_axes = pd.read_csv(os.path.join(POSTPROCESSING_CONTROL, 'axes_postprocessing.csv'))
-        df_control_axes = df_control_axes[df_control_axes['axis'] == 'MS']
-        df_control_axes['t'] = df_control_axes['t'] + delta_t_simuls
-        # Organs
-        df_current_organs = pd.read_csv(os.path.join(POSTPROCESSING, 'organs_postprocessing.csv'))
-        df_current_organs = df_current_organs[df_current_organs['axis'] == 'MS']
-        df_control_organs = pd.read_csv(os.path.join(POSTPROCESSING_CONTROL, 'organs_postprocessing.csv'))
-        df_control_organs = df_control_organs[df_control_organs['axis'] == 'MS']
-        df_control_organs['t'] = df_control_organs['t'] + delta_t_simuls
-        # Elements
-        df_current_elements = pd.read_csv(os.path.join(POSTPROCESSING, 'elements_postprocessing.csv'))
-        df_current_elements = df_current_elements[df_current_elements['axis'] == 'MS']
-        df_control_elements = pd.read_csv(os.path.join(POSTPROCESSING_CONTROL, 'elements_postprocessing.csv'))
-        df_control_elements = df_control_elements[df_control_elements['axis'] == 'MS']
-        df_control_elements['t'] = df_control_elements['t'] + delta_t_simuls
-        # HZ
-        df_current_hz = pd.read_csv(os.path.join(POSTPROCESSING, 'hiddenzones_postprocessing.csv'))
-        df_current_hz = df_current_hz[df_current_hz['axis'] == 'MS']
-        df_control_hz = pd.read_csv(os.path.join(POSTPROCESSING_CONTROL, 'hiddenzones_postprocessing.csv'))
-        df_control_hz = df_control_hz[df_control_hz['axis'] == 'MS']
-        df_control_hz['t'] = df_control_hz['t'] + delta_t_simuls
+    #Simul CNWheat OpenAlea
+    dirpath_control = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\Vegetative_stages - V2 Marion'
+    
+    POSTPROCESSING_CONTROL = os.path.join(dirpath_control, 'postprocessing')
 
-        tmin = df_current_axes.t.min()
-        tmax = df_current_axes.t.max()
+        # Axes
+    df_current_axes = pd.read_csv(os.path.join(POSTPROCESSING, 'axes_postprocessing.csv'))
+    df_current_axes = df_current_axes[df_current_axes['axis'] == 'MS']
+    df_control_axes = pd.read_csv(os.path.join(POSTPROCESSING_CONTROL, 'axes_postprocessing.csv'))
+    df_control_axes = df_control_axes[df_control_axes['axis'] == 'MS']
+    df_control_axes['t'] = df_control_axes['t'] + delta_t_simuls
+    # Organs
+    df_current_organs = pd.read_csv(os.path.join(POSTPROCESSING, 'organs_postprocessing.csv'))
+    df_current_organs = df_current_organs[df_current_organs['axis'] == 'MS']
+    df_control_organs = pd.read_csv(os.path.join(POSTPROCESSING_CONTROL, 'organs_postprocessing.csv'))
+    df_control_organs = df_control_organs[df_control_organs['axis'] == 'MS']
+    df_control_organs['t'] = df_control_organs['t'] + delta_t_simuls
+    # Elements
+    df_current_elements = pd.read_csv(os.path.join(POSTPROCESSING, 'elements_postprocessing.csv'))
+    df_current_elements = df_current_elements[df_current_elements['axis'] == 'MS']
+    df_control_elements = pd.read_csv(os.path.join(POSTPROCESSING_CONTROL, 'elements_postprocessing.csv'))
+    df_control_elements = df_control_elements[df_control_elements['axis'] == 'MS']
+    df_control_elements['t'] = df_control_elements['t'] + delta_t_simuls
+    # HZ
+    df_current_hz = pd.read_csv(os.path.join(POSTPROCESSING, 'hiddenzones_postprocessing.csv'))
+    df_current_hz = df_current_hz[df_current_hz['axis'] == 'MS']
+    df_control_hz = pd.read_csv(os.path.join(POSTPROCESSING_CONTROL, 'hiddenzones_postprocessing.csv'))
+    df_control_hz = df_control_hz[df_control_hz['axis'] == 'MS']
+    df_control_hz['t'] = df_control_hz['t'] + delta_t_simuls
+
+    tmin = df_current_axes.t.min()
+    tmax = df_current_axes.t.max()
 
 
-        # plot graphs
-        with PdfPages('Comparison_soild3ds_0.2m_vs_Marion.pdf') as pdf:
-            # phloem
-            phloem(df_current_organs, df_control_organs, tmin, tmax)
+    # plot graphs
+    with PdfPages('Comparison_cnwheat_homog_vs_cn_default.pdf') as pdf:
+        # phloem
+        phloem(df_current_organs, df_control_organs, tmin, tmax)
 
-            # dry mass & shoot : root
-            dry_mass(df_current_axes, df_control_axes, df_current_organs, df_control_organs, tmin, tmax)
+        # dry mass & shoot : root
+        dry_mass(df_current_axes, df_control_axes, df_current_organs, df_control_organs, tmin, tmax)
 
-            # N mass
-            N_mass(df_current_axes, df_control_axes, df_current_organs, df_control_organs, tmin, tmax)
+        # N mass
+        N_mass(df_current_axes, df_control_axes, df_current_organs, df_control_organs, tmin, tmax)
 
-            # Surfaces
-            surface(df_current_elements, df_control_elements, tmin, tmax)
-            include_images(GRAPHS)
+        # Surfaces
+        surface(df_current_elements, df_control_elements, tmin, tmax)
+        include_images(GRAPHS)
 
-            # Leaf length & mstruct
-            leaf_length_mstruct(df_current_hz, df_control_hz, tmin, tmax)
+        # Leaf length & mstruct
+        leaf_length_mstruct(df_current_hz, df_control_hz, tmin, tmax)
 
-            # Leaf emergence date
-            leaf_emergence(df_current_hz, df_control_hz)
+        # Leaf emergence date
+        leaf_emergence(df_current_hz, df_control_hz)    
