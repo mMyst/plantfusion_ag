@@ -2,7 +2,20 @@ from plantfusion.wheat_wrapper import Wheat_wrapper
 from plantfusion.indexer import Indexer
 from plantfusion.planter import Planter
 
-def w_postpro(out_folder, run_postprocessing=True, run_graphs=True):
+"""
+    Post-processing script of CN_wheat raw outputs
+    gGnerates postrocessing graphs and tables
+
+    The cn wheat instance is just an empty wrapper to be able to use post-processing functions
+    end() skips the model run and calls all post-processing functions from already existing outputs
+    The folder path corresponds to the output folder of a previous CN_wheat simulation at the highest level (i.e. outputs/cnwheat_default)
+
+    /!\ The only thing about the facade that matters is to provide the same meteo file name as used in the simulation as it is used in graphs
+      
+
+"""      
+
+def w_postpro(out_folder, meteo_file =  "meteo_Ljutovac2002.csv", run_postprocessing=True, run_graphs=True):
     in_folder = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\inputs_fspmwheat'
     plants_name = "wheat"
     index_log = Indexer(global_order=[plants_name], wheat_names=[plants_name])
@@ -27,6 +40,7 @@ def w_postpro(out_folder, run_postprocessing=True, run_graphs=True):
         indexer=index_log,
         external_soil_model=False,
         nitrates_uptake_forced=False,
+        METEO_FILENAME =meteo_file,
         N_fertilizations=N_fertilizations,
         tillers_replications=tillers_replications,
         update_parameters_all_models=RERmax_vegetative_stages_example,
@@ -37,6 +51,6 @@ def w_postpro(out_folder, run_postprocessing=True, run_graphs=True):
     wheat.end(simu_ran=False, run_postprocessing=run_postprocessing, run_graphs=run_graphs)
 
 if __name__ == "__main__":
-    #default folder : r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_temp'
-    out_folder = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default'
-    w_postpro(out_folder, run_postprocessing=True, run_graphs=True)
+    #default folder : r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default'
+    out_folder = r"C:\Users\agrumel\Documents\Données\Sorties Couplage\full_coupling_LUCOS_long"
+    w_postpro(out_folder, meteo_file='Lusignan_H_21-23.csv',run_postprocessing=True, run_graphs=True)
