@@ -29,7 +29,7 @@ def simulation(in_folder, out_folder, start_wheat, simulation_length, mgmt, writ
 
     tillers_replications = {"T1": 0.5, "T2": 0.5, "T3": 0.5, "T4": 0.5}
     plant_density = {1: 250}
-    sky = [4, 5, "soc"]
+    sky = [4, 5, "soc"] 
     RERmax_vegetative_stages_example = {
         "elongwheat": {
             "RERmax": {5: 3.35e-06, 6: 2.1e-06, 7: 2.0e-06, 8: 1.83e-06, 9: 1.8e-06, 10: 1.65e-06, 11: 1.56e-06}
@@ -38,7 +38,7 @@ def simulation(in_folder, out_folder, start_wheat, simulation_length, mgmt, writ
     senescwheat_timestep = 1
     light_timestep = 4
 
-    planter = Planter(generation_type="default", indexer=index_log, inter_rows=0.15, plant_density=plant_density)
+    planter = Planter(generation_type="default", indexer=index_log, inter_rows=0.14, plant_density=plant_density)
     
     wheat = Wheat_wrapper(
         in_folder=in_folder,
@@ -86,8 +86,8 @@ def simulation(in_folder, out_folder, start_wheat, simulation_length, mgmt, writ
 if __name__ == "__main__":
     in_folder = "inputs_fspmwheat"
     out_folder = "outputs/cnwheat_LUCOS"
-    mgmt=('inputs_soil_legume\management_LUCOS.xls','LUCOS_highN')
-    start_wheat= '25/10/2021' #25/10 + x jours pour atteindre stade 3 feuilles ? 
+    mgmt=('inputs_soil_legume\management_LUCOS.xls','LUCOS_nomgmt') #LUCOS_highN or LUCOS_nomgmt for N+ or N- scenarios
+    start_wheat= '17/12/2021'  
     simulation_length = 2500
     write_geo = True
 

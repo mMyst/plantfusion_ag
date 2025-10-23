@@ -235,7 +235,7 @@ if __name__ == "__main__":
     simulation_length = 2500
     id_usm = 7
     writegeo = True
-    geostep=50
+    geostep=5
 
     simulation(in_folder_legume, in_folder_wheat, out_folder, 
                start_wheat, simulation_length, id_usm,

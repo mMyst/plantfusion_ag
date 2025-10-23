@@ -68,6 +68,7 @@ def simulation(
         indexer=indexer,
         in_folder=in_folder_legume,
         out_folder=out_folder, 
+        nameconfigfile='liste_usms_couplage.xls',
         ongletconfigfile='LUBBAC',
         IDusm=id_usm, 
         planter=planter, 
@@ -222,9 +223,9 @@ if __name__ == "__main__":
     in_folder_legume = "inputs_soil_legume"
     in_folder_wheat = "inputs_fspmwheat"
     out_folder = "outputs/full_coupling_LUBBAC"
-    start_wheat='31/12/2024' #semis au 18/11/2024, 3 feuilles au 07/01/2025 d'après données 
-    simulation_length = 1500
-    id_usm = 3 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale
+    start_wheat='31/12/2024' #semis au 18/11/2024, 3 feuilles au 07/01/2025 d'après données. 31/12/2024 pour éviter pb doy, t init = 2904
+    simulation_length = 1900
+    id_usm = 2 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale
     writegeo = True
     geostep = 5
     run_postprocessing = False
