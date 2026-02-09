@@ -304,7 +304,7 @@ class Planter:
         for name, density in densities.items():
 
             # Calculer le nombre de plantes dans le domaine en fonction de la densité
-            num_plants = int(width**2*density)
+            num_plants = max(int(width**2*density),1)
             plant_spacing = width/(num_plants/n_rows[name])
 
 
