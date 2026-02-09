@@ -196,6 +196,15 @@ class Soil_wrapper(object):
                 "TotUptPlt": [],
                 "OutputNmintot": [],
             }
+            self.rootslog : dict = {
+                't':[],
+                'z':[],
+                'x':[],
+                'y':[],
+                'plant_id':[],
+                'plant_name':[],   
+                'roots_length' :[]
+            }
 
     def run(
         self,
@@ -354,6 +363,28 @@ class Soil_wrapper(object):
         self.data["transp"].append(transp)
         self.data["tsw"].append(tsw)
 
+        #self.roots = #la manière dont est écrit roots_length_per_plant_per_soil_layer.
+        #il faut qu'on récupère pour chaque voxel, la longueur de racine de chaque fspm. 
+        #probablement juste un append de roots_length_per_plant_per_soil_layer, il faut garder le jour aussi 
+        #self.roots[day] = self.inputs[6]
+        
+        #loops through roots length of each plant per soil voxels (self.inputs[6])
+        #writes the roots length, plant info and voxel coordinate when roots length > 0
+        for i in range(len(self.inputs[6])):
+            for z in range (self.inputs[6][i].shape[0]):
+                for x in range(self.inputs[6][i].shape[1]):
+                    for y in range(self.inputs[6][i].shape[2]):
+                        if self.inputs[6][i][z][x][y] > 0:
+                            self.rootslog["t"].append(day)
+                            self.rootslog["plant_id"].append(i)
+                            self.rootslog["plant_name"].append(self.inputs[4][i]["name"])
+                            self.rootslog["z"].append(z)
+                            self.rootslog["x"].append(x)
+                            self.rootslog["y"].append(y)
+                            self.rootslog["roots_length"].append(self.inputs[6][i][z][x][y])
+
+
+
     def end(self):
         """Writes the self.data in a csv file in self.out_folder
         """        
@@ -366,6 +397,8 @@ class Soil_wrapper(object):
             f = open(outHRpath, 'w')  
             IOtable.ecriture_csv(self.results[0].out_profil, f) 
             f.close()
+
+            pandas.DataFrame(self.rootslog).to_csv(os.path.join(self.out_folder, "outputs_rootslog.csv"))
             
         except AttributeError:
             print("Soil save results not activated")
