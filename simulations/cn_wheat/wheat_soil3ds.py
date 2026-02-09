@@ -13,11 +13,11 @@ import math
 
 def simulation(in_folder, out_folder, 
                start_wheat=None, simulation_length=2500, 
-               write_geo=False, run_postprocessing=False, geostep=1,
+               write_geo=False, run_postprocessing=False, run_graphs = False, geostep=1,
                rootdistribtype = 'homogeneous',min_depth=None):
     try:
         # Create target Directory
-        os.mkdir(os.path.normpath(out_folder))
+        os.makedirs(os.path.normpath(out_folder))
         print("Directory ", os.path.normpath(out_folder), " Created ")
     except FileExistsError:
         print("Directory ", os.path.normpath(out_folder), " already exists")
@@ -63,7 +63,7 @@ def simulation(in_folder, out_folder,
         writegeo=write_geo
     )
 
-    soil = Soil_wrapper(in_folder="inputs_soil_legume", out_folder=out_folder, IDusm=6050, planter=planter, save_results=True)
+    soil = Soil_wrapper(in_folder="inputs_soil_legume", out_folder=out_folder, IDusm=302010, planter=planter, save_results=True) #standard usm is 6050
 
     current_time_of_the_system = time.time()
 
@@ -92,12 +92,12 @@ def simulation(in_folder, out_folder,
                 
                 day_count += 1
 
-                if wheat.rootdistribtype == "bound":
-                    min_depth = min_depth if min_depth is not None else 0.2 #m
-                    explo_rate = 0.01 #1cm par jour en m 
+                if wheat.rootdistribtype == "bound" or wheat.rootdistribtype == "profile":
+                    min_depth = min_depth if min_depth is not None else 0.2 # unit : m
+                    explo_rate = 0.01 #1cm par jour en m, approx. from Kirkegaard et Lillet 2007
 
-                    rooting_depth = day_count * explo_rate + min_depth
-                    wheat.roots_bound = min(math.ceil(rooting_depth/soil.soil.dxyz[2][0]), len(soil.soil.dxyz[2])) #renvoie la couche jusqu'à laquelle les racines peuvent aller
+                    wheat.rooting_depth = day_count * explo_rate + min_depth
+                    wheat.roots_bound = min(math.ceil(wheat.rooting_depth/soil.soil.dxyz[2][0]), len(soil.soil.dxyz[2])) #renvoie la couche jusqu'à laquelle les racines peuvent aller
             
 
                 (
@@ -125,7 +125,7 @@ def simulation(in_folder, out_folder,
     print("\n" "Simulation run in {}".format(str(datetime.timedelta(seconds=execution_time))))
 
 
-    wheat.end(run_postprocessing=run_postprocessing)
+    wheat.end(run_postprocessing=run_postprocessing, run_graphs=run_graphs)
 
     soil.end()
 
@@ -133,16 +133,21 @@ def simulation(in_folder, out_folder,
 
 if __name__ == "__main__":
     in_folder = "inputs_fspmwheat"
-    rootdistribtype = "bound" #"bound" or "homogeneous"
-    min_depth  = 0.2 #m
-    out_folder = "outputs/cnwheat_soil3ds/"+rootdistribtype+"/"+str(min_depth)+"m"
+    rootdistribtype = "profile" #"bound" or "homogeneous" or "profile"
+    min_depth  = 0.2 #m 
+    #out_folder = "outputs/cnwheat_soil3ds/"+rootdistribtype+"/"+str(min_depth)+"m"
+    out_folder = "outputs/cnwheat_soil3ds/"+rootdistribtype+"/302010_N"
     start_wheat = None  #commence le 17/12/1998 dans CN wheat normal (351 DOY)
-    simulation_length = 2500
+    simulation_length = 2500 #2500
     write_geo = True
-    geostep = 10 
+    geostep = 100
+    run_postprocessing= True
+    run_graphs = True
+
     
 
     simulation(in_folder, out_folder, 
                start_wheat, simulation_length=simulation_length,
                 write_geo=write_geo, geostep=geostep, 
-                rootdistribtype=rootdistribtype, min_depth=min_depth)
+                rootdistribtype=rootdistribtype, min_depth=min_depth,
+                run_postprocessing=run_postprocessing, run_graphs=run_graphs)

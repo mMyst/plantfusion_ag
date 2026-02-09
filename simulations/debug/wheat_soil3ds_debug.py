@@ -4,6 +4,7 @@ from plantfusion.soil_wrapper import Soil_wrapper
 from plantfusion.planter import Planter
 from plantfusion.indexer import Indexer
 
+
 import time
 import datetime
 import os
@@ -11,18 +12,17 @@ import math
 
 
 def simulation(in_folder, out_folder, 
-               start_wheat=None, simulation_length=2500, idusm = 100,
+               start_wheat=None, simulation_length=2500, 
                write_geo=False, run_postprocessing=False, run_graphs = False, geostep=1,
-               rootdistribtype = 'homogeneous',min_depth=None, usmfolder = 'mixN'):
+               rootdistribtype = 'homogeneous',min_depth=None):
     try:
         # Create target Directory
         os.makedirs(os.path.normpath(out_folder))
         print("Directory ", os.path.normpath(out_folder), " Created ")
     except FileExistsError:
         print("Directory ", os.path.normpath(out_folder), " already exists")
-        
 
-    tillers_replications = {"T1": 0.0, "T2": 0.0, "T3": 0.0, "T4": 0.0}
+    tillers_replications = {"T1": 0.5, "T2": 0.5, "T3": 0.5, "T4": 0.5}
     plant_density = {1: 250}
     sky = "turtle46" #[4, 5, "soc"]
     RERmax_vegetative_stages_example = {
@@ -50,7 +50,7 @@ def simulation(in_folder, out_folder,
         SENESCWHEAT_TIMESTEP=senescwheat_timestep,
         LIGHT_TIMESTEP=light_timestep,
         SOIL_PARAMETERS_FILENAME="inputs_soil_legume/Parametres_plante_exemple.xls",
-        rootdistribtype=rootdistribtype
+        rootdistribtype= rootdistribtype
     )
 
 
@@ -63,9 +63,7 @@ def simulation(in_folder, out_folder,
         writegeo=write_geo
     )
 
-    soil = Soil_wrapper(in_folder="inputs_soil_legume", out_folder=out_folder, 
-                        IDusm=idusm, ongletconfigfile=usmfolder,
-                        planter=planter, save_results=True)
+    soil = Soil_wrapper(in_folder="inputs_soil_legume", out_folder=out_folder, IDusm=6050, planter=planter, save_results=True)
 
     current_time_of_the_system = time.time()
 
@@ -73,7 +71,6 @@ def simulation(in_folder, out_folder,
         wheat.start_time=wheat.meteo[wheat.meteo['Date']==start_wheat].index[0]
     
     day_count = 0
-
 
     for t in range(wheat.start_time, wheat.start_time + simulation_length, wheat.SENESCWHEAT_TIMESTEP):
 
@@ -84,7 +81,7 @@ def simulation(in_folder, out_folder,
                 lighting.writegeo=True 
             else:
                 lighting.writegeo=False
-
+            
 
             lighting.run(scenes=[wheat_input], day=wheat.doy(t), hour=wheat.hour(t), parunit="micromol.m-2.s-1", stems=stems)
             
@@ -92,17 +89,16 @@ def simulation(in_folder, out_folder,
                 wheat.light_results(energy=wheat.energy(t), lighting=lighting)
 
             if (wheat.doy(t)  != wheat.next_day_next_hour(t) ) :
-
-                day_count +=1
+                
+                day_count += 1
 
                 if wheat.rootdistribtype == "bound" or wheat.rootdistribtype == "profile":
-                    min_depth = min_depth if min_depth is not None else 0.2 #m
-                    explo_rate = 0.01 #1cm par jour en m from Kirkegaard et Lillet 2007
+                    min_depth = min_depth if min_depth is not None else 0.2 # unit : m
+                    explo_rate = 0.01 #1cm par jour en m, approx. from Kirkegaard et Lillet 2007
 
                     wheat.rooting_depth = day_count * explo_rate + min_depth
                     wheat.roots_bound = min(math.ceil(wheat.rooting_depth/soil.soil.dxyz[2][0]), len(soil.soil.dxyz[2])) #renvoie la couche jusqu'à laquelle les racines peuvent aller
             
-
 
                 (
                     N_content_roots_per_plant,
@@ -111,6 +107,8 @@ def simulation(in_folder, out_folder,
                     plants_light_interception,
                 ) = wheat.soil_inputs(soil, planter, lighting)
 
+
+                
 
                 soil.run(
                     wheat.doy(t, soil3ds=True),
@@ -128,25 +126,27 @@ def simulation(in_folder, out_folder,
 
 
     wheat.end(run_postprocessing=run_postprocessing, run_graphs=run_graphs)
+
     soil.end()
+
 
 
 if __name__ == "__main__":
     in_folder = "inputs_fspmwheat"
     rootdistribtype = "profile" #"bound" or "homogeneous" or "profile"
-    min_depth  = 0.20 #m
-    idusm=100
-    out_folder = "outputs/cnwheat_soil3ds"+rootdistribtype+"/"+str(min_depth)+"m" + '_'+ str(idusm)+'N'
-    start_wheat = None #<=> blé semé au DOY 288 de l'an n-1 donc début de la simul au 17/12/1998
-    simulation_length = 2500 #3588 = 15/05 <=> doy 500 mais ça bug à 3307 donc on va aller à 3300 (dernière heure du 3/04) pour être sûr de ne pas avoir de pb
-    write_geo = True
-    usmfolder = 'mixN'
-    geostep = 10
-    run_postprocessing = True
+    min_depth  = 0.2 #m 
+    out_folder = "outputs/cnwheat_soil3ds_debug/"+rootdistribtype+"/"+str(min_depth)+"m"
+    start_wheat = None  #commence le 17/12/1998 dans CN wheat normal (351 DOY)
+    simulation_length = 2500 #2500
+    write_geo = False
+    geostep = 100
+    run_postprocessing= True
     run_graphs = True
 
-    simulation(in_folder , out_folder = out_folder,
-               rootdistribtype = rootdistribtype, min_depth=min_depth,
-                idusm=idusm, start_wheat=start_wheat, simulation_length=simulation_length, 
-                write_geo=write_geo, geostep = geostep,
-                run_postprocessing=run_postprocessing, run_graphs = run_graphs)
+    
+
+    simulation(in_folder, out_folder, 
+               start_wheat, simulation_length=simulation_length,
+                write_geo=write_geo, geostep=geostep, 
+                rootdistribtype=rootdistribtype, min_depth=min_depth,
+                run_postprocessing=run_postprocessing, run_graphs=run_graphs)
