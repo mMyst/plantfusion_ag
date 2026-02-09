@@ -19,7 +19,7 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=2500, w
     plants_name = "wheat"
     index_log = Indexer(global_order=[plants_name], wheat_names=[plants_name])
 
-    N_fertilizations = {2016: 357143, 2520: 1000000}
+    N_fertilizations = {2016: 357143, 2520: 1000000} #11 mars et 1er avril
     tillers_replications = {"T1": 0.5, "T2": 0.5, "T3": 0.5, "T4": 0.5}
     plant_density = {1: 250}
     sky = "turtle46"
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     start_wheat = None
     simulation_length = 2500
     write_geo = True
-    run_postprocessing=False
-    run_graphs=False
+    run_postprocessing=True
+    run_graphs=True
 
     simulation(in_folder, out_folder,start_wheat, simulation_length, write_geo=write_geo,run_postprocessing=run_postprocessing,run_graphs=run_graphs)

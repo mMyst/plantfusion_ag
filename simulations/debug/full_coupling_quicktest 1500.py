@@ -232,10 +232,10 @@ if __name__ == "__main__":
     in_folder_wheat = "inputs_fspmwheat"
     out_folder = "outputs/full_coupling_quicktest"
     start_wheat='07/05/2021' 
-    simulation_length = 1500
+    simulation_length = 100 #1500
     id_usm = 7
     writegeo = True
-    geostep = 5 
+    geostep = 50
 
     simulation(in_folder_legume, in_folder_wheat, out_folder, 
                start_wheat, simulation_length, id_usm,

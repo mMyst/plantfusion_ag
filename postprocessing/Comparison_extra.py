@@ -454,6 +454,8 @@ if __name__ == '__main__':
     # get current directory
     # path = os.getcwd()
     
+     ### Path Current
+
     #Simul CNWheat Plantfusion
     #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_temp\wheat'
 
@@ -461,28 +463,45 @@ if __name__ == '__main__':
     #path = r'C:\Users\agrumel\Code\Python_Ecophy\WheatFspm\fspm-wheat\example\Vegetative_stages'
 
     #Simul CNWheat Soil3DS
-    path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\bound\0.2m\wheat'
-    #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\homogeneous\classic\wheat'
+    #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\bound\0.2m\wheat'
+    #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\profile\0.2m\wheat'
+    #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds_debug\homogeneous\1.5m\wheat'
+    #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds_debug\profile\0.2m\wheat'
+
+    #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\profile\0.2m_50N\wheat'
+    path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\profile\lowN\0.2m_50N\wheat'
+    path = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\lowN_monoculm\0.2m_50N\wheat'
+    path = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\lowN\0.2m_50N\wheat'
+
+
+    #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\profile\54321_N\wheat'
+    #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\profile\302010_N\wheat'
+
+    #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\bound\0.2m_N\wheat'
+
+
+    #Simul CNWheat tillers
+    #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\0til\wheat'
 
     POSTPROCESSING = os.path.join(path, 'postprocessing')
     GRAPHS = os.path.join(path, 'graphs')
 
-    # Path Control
+    ### Path Control
     
     #Version Soumission Marion
     #dirpath_control = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\Données Marion\Soumission_JXBot'
 
     #Simul CNWheat Plantfusion
-    dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_temp\wheat'
+    #dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default\wheat'
 
     #simul CNWheat Marion depuis mon ordi
     #dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\WheatFspm\fspm-wheat\example\Vegetative_stages'
 
     #Simul CNWheat OpenAlea
-    #dirpath_control = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\Vegetative_stages - V2 Marion'
+    #dirpath_control = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\Vegetative_stages - V2 Marion\outputs'
 
 
-    OUTPUTS_MARION = os.path.join(dirpath_control, 'outputs')
+    OUTPUTS_MARION = os.path.join(dirpath_control, 'brut')
     POSTPROCESSING_MARION = os.path.join(dirpath_control, 'postprocessing')
     GRAPHS_MARION = os.path.join(dirpath_control, 'graphs')
 
@@ -526,7 +545,7 @@ if __name__ == '__main__':
     tmax = df_current_axes.t.max()
 
     # plot graphs
-    with PdfPages('Comparison_Soil3Ds_bound_vs_cn_local.pdf') as pdf:
+    with PdfPages('Comparison_cnwheat.pdf') as pdf:
         # phloem
         phloem(df_current_organs, df_marion_organs, tmin, tmax)
 

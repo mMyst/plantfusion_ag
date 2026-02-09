@@ -284,11 +284,23 @@ def leaf_emergence(df_current_hz, df_control_hz):
 if __name__ == '__main__':
     # get current directory
     # path = os.getcwd()
+
+    #Path Current
     
+    #Simul default plantfusion
     #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_temp\wheat'
+
+    #Simul vegetative states
     #path = r'C:\Users\agrumel\Code\Python_Ecophy\WheatFspm\fspm-wheat\example\Vegetative_stages'
+    
+    #Simul Soil3DS bound 0.2m
     #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\bound\0.2m\wheat'
-    path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\homogeneous\classic\wheat'
+    
+    #Simul Soil3DS homogeneous
+    #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\homogeneous\classic\wheat'
+
+    #Simul CNWheat tillers
+    path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\0til\wheat'
 
     POSTPROCESSING = os.path.join(path, 'postprocessing')
     GRAPHS = os.path.join(path, 'graphs')
@@ -302,8 +314,12 @@ if __name__ == '__main__':
     #dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_temp\wheat'
 
     #Simul CNWheat OpenAlea
-    dirpath_control = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\Vegetative_stages - V2 Marion'
+    #dirpath_control = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\Vegetative_stages - V2 Marion'
     
+    #Simul CNWheat tillers
+    dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\1til\wheat'
+
+
     POSTPROCESSING_CONTROL = os.path.join(dirpath_control, 'postprocessing')
 
         # Axes

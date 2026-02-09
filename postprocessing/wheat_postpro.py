@@ -4,7 +4,7 @@ from plantfusion.planter import Planter
 
 """
     Post-processing script of CN_wheat raw outputs
-    gGnerates postrocessing graphs and tables
+    generates postrocessing graphs and tables
 
     The cn wheat instance is just an empty wrapper to be able to use post-processing functions
     end() skips the model run and calls all post-processing functions from already existing outputs
@@ -52,5 +52,5 @@ def w_postpro(out_folder, meteo_file =  "meteo_Ljutovac2002.csv", run_postproces
 
 if __name__ == "__main__":
     #default folder : r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default'
-    out_folder = r"C:\Users\agrumel\Documents\Données\Sorties Couplage\full_coupling_LUCOS_long"
+    out_folder = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default'
     w_postpro(out_folder, meteo_file='Lusignan_H_21-23.csv',run_postprocessing=True, run_graphs=True)

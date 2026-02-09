@@ -233,9 +233,9 @@ if __name__ == "__main__":
     out_folder = "outputs/full_coupling_LUCOS"
     start_wheat='17/12/2021' 
     simulation_length = 2500
-    id_usm = 9 #7 long run : alf starts in march, 8 short run : alf starts in sept, 9 short run and regulation
+    id_usm = 8 #7 long run : alf starts in march, 8 short run : alf starts in sept, 9 short run and regulation
     writegeo = True
-    geostep = 10
+    geostep = 1
     simulation(in_folder_legume, in_folder_wheat, out_folder, 
                start_wheat, simulation_length, id_usm, 
                writegeo=writegeo, geostep=geostep)

@@ -226,7 +226,7 @@ if __name__ == "__main__":
     simulation_length = 2500
     id_usm = 3 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale
     writegeo = True
-    geostep = 5
+    geostep = 50
     run_postprocessing = False
     simulation(in_folder_legume, in_folder_wheat, out_folder, 
                start_wheat, simulation_length, id_usm, 
