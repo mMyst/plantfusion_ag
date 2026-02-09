@@ -970,7 +970,7 @@ class Wheat_wrapper(object):
         run_postprocessing : bool, optional
             activate postprocessing files writting, by default False
         """        
-        PRECISION = 4
+        PRECISION = 8
 
         outputs_brut = os.path.join(self.out_folder, "brut")
 
@@ -1659,18 +1659,25 @@ class Wheat_wrapper(object):
                 roots_length_per_voxel[iz, :, :] = (roots_mass * self.SRL) / (self.roots_bound*soil_wrapper.soil_dimensions[1]*soil_wrapper.soil_dimensions[2])
 
         if rootdistribtype == "profile":
-            #pas fonctionnel, en l'état dilue les racines jusqu'à profondeur max fixe de 150cm
-            self.compute_root_profile(roots_mass,soil_wrapper) #computes self.root_profile, 1D array of length soil_wrapper.soil_dimensions[0] (z) containing the root mass per layer
+            #in progress
+            #get_mass_repartition uses equations from the STICS model. Distances are in cm and masses in g
+            layer_in_cm = soil_wrapper.soil.dxyz[2][0] * 100 #converts layer thickness in cm
+            root_depth_cm = self.rooting_depth *100 #converts front depth in cm
+            self.root_profile = self.get_mass_repartition(layer_thickness = layer_in_cm,
+                                                          front_depth= root_depth_cm, 
+                                                          total_mass=roots_mass
+                                                          )['mass'] #computes self.root_profile, df containing the root mass per layer
          
-            for iz in range(soil_wrapper.soil_dimensions[0]):
+            for iz in range(len(self.root_profile)):
+                #warning => change to avoid conflict if root_profile goes deeper than soil_wrapper.soil_dimensions[0]
                 roots_length_per_voxel[iz, :, :] = self.root_profile[iz] * self.SRL / (soil_wrapper.soil_dimensions[1]*soil_wrapper.soil_dimensions[2])
-        
+
         return roots_length_per_voxel
 
     def compute_SRL_wheat(self, mass_roots):
         """Dynamic specific root length according to roots mass
 
-        Here, SRL is linear following roots mass
+        Here, SRL is linear following roots mass (m.g-1)
 
         Parameters
         ----------
@@ -1685,35 +1692,99 @@ class Wheat_wrapper(object):
         else:
             self.SRL = 200
 
-    def compute_root_profile(self, roots_mass, soil_wrapper):
-        """Dynamic rooting depth according to roots mass
-
-        root profile from mass using eq from Fan et al. 2016 
-
-        Parameters
-        ----------
-        mass_roots : float
-            roots mass in g
+    def compute_rootfrontgrowth(self, oui ):
         """
-        da = 17.2
-        c = -1.286 
-        dmax = 150.4
+        TODO
+        Computes root front progression.
+        
+        Args:
+            
+        """
+        
+        
+    
+  
+    def get_mass_repartition(self,layer_thickness, front_depth, total_mass, k=0.0015, p=0.05, resolution = 0.1):
+        """
+        Calculates the repartition of a given total mass across depth layers 
+        up to a specific front depth.
 
-        #dmax = 1 * day +20 
+        Parameters:
+        -----------
+        layer_thickness : float
+            The vertical thickness of each layer (e.g., 5 for 5cm layers). 
+            Should be positive.
+        front_depth : float
+            The current position of the front (e.g., -150). 
+            Should be negative (or 0).
+        total_mass : float
+            The total mass to be distributed across the active layers.
+        k : float, optional
+            Parameter kdisrac_p (default 0.0015).
+        p : float, optional
+            Parameter lvfront_p (default 0.05).
+        resolution : float, optional
+            The resolution for the mass repartition (default 0.1, mm).
+        Returns:
+        --------
+        pandas.DataFrame
+            A dataframe containing:
+            - 'layer_top': Top depth of the layer
+            - 'layer_bottom': Bottom depth of the layer
+            - 'layer_center': Center depth for plotting
+            - 'mass': The calculated mass in that layer
+        """
+        
+        # ensure front_depth is negative and layer_thickness is positive
+        front_depth = -abs(front_depth)
+        layer_thickness = abs(layer_thickness)
 
-        self.root_profile = numpy.zeros(soil_wrapper.soil_dimensions[0])
+        # 1. Define Layer profile from 0 down to front_depth
+        # We use arange. We add a small epsilon to include the final boundary if it divides evenly
+        epsilon = 1e-9
+        profile = numpy.arange(0, front_depth + epsilon, -resolution)
+        
+            
+        # 2. Calculate Cumulative Distribution Function (dis) at profile
+        # Formula: dis = p + (1-p) * exp(-k * z^2)
+        dis_values = p + (1 - p) * numpy.exp(-k * (profile**2))
 
-        for iz in range(len(self.root_profile)):
-            d= (iz+1)*soil_wrapper.soil.dxyz[2][0] # depth in cm (iz+1 because iz starts at 0)
-            self.root_profile[iz] = (1 / (1 + (d/da)**c) + (1 - 1/(1+ (dmax/da)**c))*(d/dmax) ) * roots_mass 
-            # Calculate the root mass at depth d for a total root mass of roots_mass
+        # 3. Calculate Raw Mass in each interval (difference between profile)
+        # We want positive mass, so we take Previous - Current.
+        raw_masses = dis_values[:-1] - dis_values[1:]
 
-            # At this stage, root_profile is cumulative; we need to convert it to incremental for root distribution in soil layers
+        # 4. Normalize to the requested total_mass
+        current_total_raw = numpy.sum(raw_masses)
+        
+        if current_total_raw == 0:
+            return pandas.DataFrame() # Return empty if no depth
+            
+        normalization_factor = total_mass / current_total_raw
+        final_masses = raw_masses * normalization_factor
 
-            # Convert the cumulative list to incremental => root mass in each soil layer
-        for iz in range(len(self.root_profile) - 1, 0, -1):
-            self.root_profile[iz] = self.root_profile[iz] - self.root_profile[iz - 1]
-         
+        # 5. Aggregate mass into layers based on layer_thickness
+        layer_top_edges = numpy.arange(0, front_depth, -layer_thickness)
+        
+        #Correct the final bottom edge to go down to front_depth
+        layer_bottom_edges = layer_top_edges - layer_thickness
+        #layer_bottom_edges[-1] = front_depth
+
+        #We have the edges of our layers. Now we need to sum up all the mass within each layer.
+        layer_masses = []
+        for top, bottom in zip(layer_top_edges, layer_bottom_edges):
+            mask = (profile[:-1] >= bottom) & (profile[:-1] < top)
+            layer_masses.append(numpy.sum(final_masses[mask]))
+
+        #Package into a DataFrame
+        df = pandas.DataFrame({
+            'layer_top': layer_top_edges,
+            'layer_bottom': layer_bottom_edges,
+            'layer_center': (layer_top_edges + layer_bottom_edges) / 2,
+            'mass': layer_masses
+        })
+
+        return df
+
 
     def compute_plants_light_interception(self, plant_leaf_area, soil_energy):
         """Computes light capacity interception for each plant
