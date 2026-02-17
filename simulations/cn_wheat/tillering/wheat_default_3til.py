@@ -20,7 +20,7 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=2500,
     plants_name = "wheat"
     index_log = Indexer(global_order=[plants_name], wheat_names=[plants_name])
 
-    N_fertilizations = {2016: 357143, 2520: 1000000}
+    N_fertilizations = {1440: 357143, 2520: 1000000}
     tillers_replications = {"T1": 0.5, "T2": 0.5, "T3": 0.5}
     plant_density = {1: 250}
     sky = "turtle46"
@@ -31,6 +31,7 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=2500,
     }
     senescwheat_timestep = 1
     light_timestep = 4
+
 
     planter = Planter(generation_type="default", indexer=index_log, inter_rows=0.15, plant_density=plant_density)
     
@@ -46,6 +47,8 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=2500,
         update_parameters_all_models=RERmax_vegetative_stages_example,
         SENESCWHEAT_TIMESTEP=senescwheat_timestep,
         LIGHT_TIMESTEP=light_timestep,
+        AXES_INITIAL_STATE_FILENAME="axes_initial_state_3til.csv",
+        HIDDENZONES_INITIAL_STATE_FILENAME="hiddenzones_initial_state_3til.csv"
     )
 
     lighting = Light_wrapper(
@@ -85,14 +88,14 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=2500,
 
 
 if __name__ == "__main__":
-    in_folder = "inputs_fspmwheat"
+    in_folder = "inputs_fspmwheat/forced_tillers_init"
     out_folder = "outputs/cnwheat_default_tillers/3til"
     start_wheat = None
     simulation_length = 2500
     write_geo = True
     run_postprocessing=True
     run_graphs=True
-    geostep = 10 
+    geostep = 100
 
 
     simulation(in_folder, out_folder,start_wheat,simulation_length, 

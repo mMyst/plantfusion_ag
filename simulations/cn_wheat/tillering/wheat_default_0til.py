@@ -20,9 +20,9 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=2500,
     plants_name = "wheat"
     index_log = Indexer(global_order=[plants_name], wheat_names=[plants_name])
 
-    N_fertilizations = {2016: 357143, 2520: 1000000}
+    N_fertilizations = {1440: 357143, 2520: 1000000}
     tillers_replications = None
-    plant_density = {1: 5} #250 by default
+    plant_density = {1: 250} #250 by default
     sky = "turtle46"
     RERmax_vegetative_stages_example = {
         "elongwheat": {
@@ -32,24 +32,7 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=2500,
     senescwheat_timestep = 1
     light_timestep = 4
 
-    wheat_name = "wheat"
-
-
-    densities = {wheat_name: 5}
-    n_rows = {wheat_name: 1}
-    inter_rows = {wheat_name: 0.14}
-    offset = {wheat_name: 0.15*2}
-    noise = {wheat_name:0.001}
-
-
-    planter = Planter(indexer=index_log,
-                      generation_type='row_forced',
-                      plant_density=densities,
-                      n_rows=n_rows,
-                      inter_rows=inter_rows,
-                      save_wheat_positions=True)
-
-    #planter = Planter(generation_type="default", indexer=index_log, inter_rows=0.15, plant_density=plant_density)
+    planter = Planter(generation_type="default", indexer=index_log, inter_rows=0.15, plant_density=plant_density)
     
     wheat = Wheat_wrapper(
         in_folder=in_folder,
@@ -63,6 +46,8 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=2500,
         update_parameters_all_models=RERmax_vegetative_stages_example,
         SENESCWHEAT_TIMESTEP=senescwheat_timestep,
         LIGHT_TIMESTEP=light_timestep,
+        AXES_INITIAL_STATE_FILENAME="axes_initial_state_0til.csv",
+        HIDDENZONES_INITIAL_STATE_FILENAME="hiddenzones_initial_state_0til.csv"
     )
 
     lighting = Light_wrapper(
@@ -101,14 +86,14 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=2500,
 
 
 if __name__ == "__main__":
-    in_folder = "inputs_fspmwheat"
+    in_folder = "inputs_fspmwheat/forced_tillers_init"
     out_folder = "outputs/cnwheat_default_tillers/0til"
     start_wheat = None
     simulation_length = 2500
     write_geo = True
     run_postprocessing=True
     run_graphs=True
-    geostep = 50
+    geostep = 100
 
 
     simulation(in_folder, out_folder,start_wheat,simulation_length, 
