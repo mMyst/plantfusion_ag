@@ -510,9 +510,9 @@ if __name__ == '__main__':
         # 'Sim_Default': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_temp\wheat',
         
         'Sim_Tillers_0': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\0til\wheat',
-        # 'Sim_Tillers_1': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\1til\wheat',
-        # 'Sim_Tillers_2': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\2til\wheat',
-        # 'Sim_Tillers_3': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\3til\wheat'
+        'Sim_Tillers_1': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\1til\wheat',
+        'Sim_Tillers_2': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\2til\wheat',
+        'Sim_Tillers_3': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\3til\wheat'
         # Add as many as needed here...
 
         #'Sim_Soil3DS_Bound_0.2m': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\bound\0.2m\wheat',
@@ -552,23 +552,21 @@ if __name__ == '__main__':
 
     # Load Control Data
     df_control_axes = pd.read_csv(os.path.join(POSTPROCESSING_CONTROL, 'axes_postprocessing.csv'))
-    #df_control_axes = df_control_afxes[df_control_axes['axis'] == 'MS']
     df_control_axes['t'] = df_control_axes['t'] + delta_t_simuls
     
     df_control_axes_outputs = pd.read_csv(os.path.join(OUTPUTS_CONTROL, 'axes_outputs.csv'))
-    #df_control_axes_outputs = df_control_axes_outputs[df_control_axes_outputs['axis'] == 'MS']
     df_control_axes_outputs['t'] = df_control_axes_outputs['t'] + delta_t_simuls
 
     df_control_organs = pd.read_csv(os.path.join(POSTPROCESSING_CONTROL, 'organs_postprocessing.csv'))
-    #df_control_organs = df_control_organs[df_control_organs['axis'] == 'MS']
     df_control_organs['t'] = df_control_organs['t'] + delta_t_simuls
 
     df_control_elements = pd.read_csv(os.path.join(POSTPROCESSING_CONTROL, 'elements_postprocessing.csv'))
-    #df_control_elements = df_control_elements[df_control_elements['axis'] == 'MS']
     df_control_elements['t'] = df_control_elements['t'] + delta_t_simuls
 
+    df_control_elements_outputs = pd.read_csv(os.path.join(OUTPUTS_CONTROL, 'elements_outputs.csv'))
+    df_control_elements_outputs['t'] = df_control_elements_outputs['t'] + delta_t_simuls
+
     df_control_hz = pd.read_csv(os.path.join(POSTPROCESSING_CONTROL, 'hiddenzones_postprocessing.csv'))
-    #df_control_hz = df_control_hz[df_control_hz['axis'] == 'MS']
     df_control_hz['t'] = df_control_hz['t'] + delta_t_simuls
 
     # 2. Load Current Simulations Data
@@ -578,6 +576,7 @@ if __name__ == '__main__':
     dict_current_hz = {}
     dict_graphs_paths = {}
     dict_current_axes_outputs = {}
+    dict_current_elements_outputs = {}
 
     for sim_name, path in simulations_paths.items():
         POSTPROCESSING = os.path.join(path, 'postprocessing')
@@ -589,22 +588,20 @@ if __name__ == '__main__':
         df_elt = pd.read_csv(os.path.join(POSTPROCESSING, 'elements_postprocessing.csv'))
         df_hz = pd.read_csv(os.path.join(POSTPROCESSING, 'hiddenzones_postprocessing.csv'))
 
-        # Filter for main stem (MS) only
-        # df_ax= df_ax[df_ax['axis'] == 'MS']
-        # df_org = df_org[df_org['axis'] == 'MS']
-        # df_elt = df_elt[df_elt['axis'] == 'MS']
-        # df_hz = df_hz[df_hz['axis'] == 'MS']
-
         # Update dictionaries with filtered data
         dict_current_axes[sim_name] = df_ax
         dict_current_organs[sim_name] = df_org
         dict_current_elements[sim_name] = df_elt
         dict_current_hz[sim_name] = df_hz
 
+        #load raw outputs for axes and elements
         OUTPUTS = os.path.join(path, 'brut')
         df_ax_outputs = pd.read_csv(os.path.join(OUTPUTS, 'axes_outputs.csv'))
-        #df_ax_outputs = df_ax_outputs[df_ax_outputs['axis'] == 'MS']
         dict_current_axes_outputs[sim_name] =  df_ax_outputs
+
+        df_elt_outputs = pd.read_csv(os.path.join(OUTPUTS, 'elements_outputs.csv'))
+        dict_current_elements_outputs[sim_name] = df_elt_outputs
+
         
         
     # Create filtered dictionaries and dataframes for MS only
@@ -629,7 +626,7 @@ if __name__ == '__main__':
         dry_mass(dict_current_axes, df_control_axes, dict_current_organs, df_control_organs, tmin, tmax, pdf)
         N_mass(dict_current_axes, df_control_axes, dict_current_organs, df_control_organs, tmin, tmax, pdf)
         surface(dict_current_elements, df_control_elements, tmin, tmax, pdf)
-        height(dict_current_elements, df_control_elements, tmin, tmax, pdf)
+        height(dict_current_elements_outputs, df_control_elements_outputs, tmin, tmax, pdf)
         include_images(dict_graphs_paths, GRAPHS_CONTROL, pdf)
         leaf_length_mstruct_area(dict_current_hz_MS, df_control_hz_MS, dict_current_elements_MS, df_control_elements_MS, tmin, tmax, pdf)
         leaf_emergence(dict_current_hz_MS, df_control_hz_MS, pdf)
