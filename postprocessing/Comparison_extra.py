@@ -469,19 +469,20 @@ if __name__ == '__main__':
     #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds_debug\profile\0.2m\wheat'
 
     #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\profile\0.2m_50N\wheat'
-    path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\profile\lowN\0.2m_50N\wheat'
-    path = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\lowN_monoculm\0.2m_50N\wheat'
-    path = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\lowN\0.2m_50N\wheat'
+    # path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\profile\lowN\0.2m_50N\wheat'
+    # path = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\lowN_monoculm\0.2m_50N\wheat'
+    # path = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\lowN\0.2m_50N\wheat'
 
 
-    #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\profile\54321_N\wheat'
+    # path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\profile\54321_N\wheat'
     #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\profile\302010_N\wheat'
 
     #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\bound\0.2m_N\wheat'
 
 
     #Simul CNWheat tillers
-    #path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\0til\wheat'
+    path = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\0til\wheat'
+
 
     POSTPROCESSING = os.path.join(path, 'postprocessing')
     GRAPHS = os.path.join(path, 'graphs')
@@ -492,7 +493,7 @@ if __name__ == '__main__':
     #dirpath_control = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\Données Marion\Soumission_JXBot'
 
     #Simul CNWheat Plantfusion
-    #dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default\wheat'
+    dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default\wheat'
 
     #simul CNWheat Marion depuis mon ordi
     #dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\WheatFspm\fspm-wheat\example\Vegetative_stages'
