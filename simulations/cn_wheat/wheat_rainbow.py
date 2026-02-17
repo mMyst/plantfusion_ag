@@ -19,7 +19,7 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=2500, w
     plants_name = "wheat"
     index_log = Indexer(global_order=[plants_name], wheat_names=[plants_name])
 
-    N_fertilizations = {2016: 357143, 2520: 1000000}
+    N_fertilizations = {1440: 357143, 2520: 1000000}
     tillers_replications = {"T1": 0.5, "T2": 0.5, "T3": 0.5, "T4": 0.5}
     plant_density = {1: 250}
     sky = "turtle46"
