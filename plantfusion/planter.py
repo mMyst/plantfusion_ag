@@ -127,6 +127,9 @@ class Planter:
             self.__forced(positions_grid)
             self.type_domain = 'mix'
 
+        
+
+
 
     def __random(self, plant_density, xy_square_length):
         """Parameters for random generation type
@@ -231,6 +234,8 @@ class Planter:
         ----------
         positions : list of arrays
         """        
+        #clear plant_density 
+        self.plant_density = {}
 
         #set the size of the domain
         if self.domain is None :
@@ -254,6 +259,7 @@ class Planter:
         for name, positions in positions_grid.items():
             if name in self.indexer.global_order:
                 self.number_of_plants[self.indexer.global_order.index(name)] = len(positions)
+                self.plant_density[name] = int(len(positions)/(self.domain[1][0]*self.domain[1][1]))
 
                 if name in self.indexer.legume_names:
                     i = self.indexer.legume_names.index(name)
@@ -268,7 +274,7 @@ class Planter:
 
         #legume parameters are initialised with default values that will get rewritten in legume-wrapper. they are mandatory for L_egume to initalize.
         self.legume_typearrangement = "random8"
-        self.legume_nbcote=[8]
+        self.legume_nbcote=[8]*len(self.indexer.legume_names) #multiply because default behaviour expects a list of legume types if multiple legume types are present
         self.legume_cote = (self.domain[1][0]-self.domain[0][0]) *100 #in cm
         self.legume_optdamier = 8
 
@@ -350,11 +356,8 @@ class Planter:
 
         grids = {name: [] for name in col_pattern}
         
-        for name in col_pattern:
 
-            # Créer une grille de coordonnées pour la catégorie de points actuelle
-            
-            for col_id in range(n_cols):
+        for col_id in range(n_cols):
                 grid_col = []
                 x =  cell_size/2 + col_id*cell_size
                 for row_id in range(n_rows):
@@ -370,7 +373,7 @@ class Planter:
                 name = col_pattern[modulo] 
 
                 # Stocker la grille de coordonnées dans le dictionnaire
-                grids[name].extend(grid_col)
+                grids[name].extend(grid_col)            
             
                
 

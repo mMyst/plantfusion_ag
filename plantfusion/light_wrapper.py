@@ -113,6 +113,7 @@ class Light_wrapper(object):
 
         self.type_domain = planter.type_domain
         self.domain = planter.domain
+        self.domain_area = self.domain[1][0] * self.domain[1][1]
 
         self.environment = {
             "coordinates": coordinates,
@@ -218,7 +219,7 @@ class Light_wrapper(object):
             main_unit="m",
         )
 
-        self.i_vtk = 0
+        
 
     def run(self, energy=1.0, scenes=[], day=1, hour=12, parunit="RG", stems=None):
         """Run the lighting computation
@@ -251,6 +252,8 @@ class Light_wrapper(object):
 
         if self.writegeo:
             file_project_name = os.path.join(os.path.normpath(self.out_folder), "vtk", "plantfusion_")
+
+            self.i_vtk = int(day) * 100 + int(hour)
             
             if self.lightmodel == "ratp":
                 printvoxels = True
@@ -282,7 +285,7 @@ class Light_wrapper(object):
                     os.path.join(self.out_folder, "plantgl", "scene_light_plantgl_" + str(self.i_vtk)) + ".bgeom"
                 )
 
-            self.i_vtk += 1*self.geostep
+            
 
     def results_organs(self):
         """Return lighting results at organ scale
@@ -380,6 +383,11 @@ class Light_wrapper(object):
         """        
         return self.light.domain
     
+    def total_area(self):
+        """ return total triangle area of the mesh
+        """
+        return self.light.total_area
+    
     def plantgl(self, lighting=False, printtriangles=True, printvoxels=False):
         """Return plantGL scene of LightVegeManager mesh
 
@@ -401,3 +409,4 @@ class Light_wrapper(object):
                                         printtriangles=printtriangles, 
                                         printvoxels=printvoxels, 
                                         virtual_sensors=self.compute_sensors) 
+
