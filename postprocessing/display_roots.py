@@ -79,5 +79,9 @@ if __name__ == "__main__":
 
     #csv_file = r"C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds_debug\profile\0.2m\soil\outputs_rootslog.csv" 
 
-    csv_file = r"C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\homogeneous\1.5m\soil\outputs_rootslog.csv" 
+    # csv_file = r"C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\homogeneous\1.5m\soil\outputs_rootslog.csv" 
+
+    # csv_file = r"C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\full_coupling_LUBBAC\soil\outputs_rootslog.csv"
+    csv_file = r"C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\wheat_LUBBAC\soil\outputs_rootslog.csv"
+
     display_root_profile(csv_file, layer_thickness=5)

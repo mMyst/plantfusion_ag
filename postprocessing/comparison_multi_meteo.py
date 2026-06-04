@@ -3,22 +3,15 @@ import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 
+###comparison between cnwheat sims, agnostic of meteo data. 
+### we use t as the only x axis
+
 delta_t_simuls = 0 #1509
 meteo_data = pd.read_csv(os.path.join('inputs_fspmwheat', 'meteo_Ljutovac2002.csv'), index_col='t')
 meteo_data['Date'] = pd.to_datetime(meteo_data['Date'], format='%d/%m/%Y')
 
 
-def add_date_axis(ax, meteo_data):
-    """Helper function to add the secondary Date x-axis."""
-    ax2 = ax.twiny()
-    ax2.set_xticks(ax.get_xticks())
-    # Ensure ticks exist in meteo_data to prevent KeyError
-    valid_ticks = [t for t in ax.get_xticks() if t in meteo_data.index]
-    if valid_ticks:
-        ax2.set_xticklabels(meteo_data.loc[valid_ticks]['Date'].dt.strftime('%d/%m'))
-    ax2.xaxis.set_ticks_position('bottom')
-    ax2.xaxis.set_label_position('bottom')
-    ax2.spines['bottom'].set_position(('outward', 35))
+
 
 
 def phloem(dict_current_organs, df_control_organs, tmin, tmax, pdf):
@@ -47,7 +40,6 @@ def phloem(dict_current_organs, df_control_organs, tmin, tmax, pdf):
     axs[1, 0].legend()
     axs[1, 0].set_xlim(tmin, tmax)
     axs[1, 0].set_ylabel('Concentration amino acids (µmol g-1)')
-    add_date_axis(axs[1, 0], meteo_data)
 
     # 4. Amino acids amount
     axs[1, 1].plot(df_control_organs[df_control_organs.organ == 'phloem']['t'], df_control_organs[df_control_organs.organ == 'phloem']['amino_acids'], label='Control', color='black', linestyle='--')
@@ -56,7 +48,6 @@ def phloem(dict_current_organs, df_control_organs, tmin, tmax, pdf):
     axs[1, 1].legend()
     axs[1, 1].set_xlim(tmin, tmax)
     axs[1, 1].set_ylabel('amino acids (µmol N)')
-    add_date_axis(axs[1, 1], meteo_data)
 
     plt.tight_layout()
     pdf.savefig()
@@ -128,7 +119,6 @@ def roots(dict_current_organs, df_control_organs, tmin, tmax, pdf):
     axs[1, 0].legend()
     axs[1, 0].set_xlim(tmin, tmax)
     axs[1, 0].set_ylabel('Concentration nitrates (µmol g-1)')
-    add_date_axis(axs[1, 0], meteo_data)
 
     # 4. Cytokinins
     axs[1, 1].plot(df_control_organs[df_control_organs.organ == 'roots']['t'], df_control_organs[df_control_organs.organ == 'roots']['Conc_cytokinins'], label='Control', color='black', linestyle='--')
@@ -137,7 +127,6 @@ def roots(dict_current_organs, df_control_organs, tmin, tmax, pdf):
     axs[1, 1].legend()
     axs[1, 1].set_xlim(tmin, tmax)
     axs[1, 1].set_ylabel('Conc_cytokinins (AU g-1)')
-    add_date_axis(axs[1, 1], meteo_data)
 
     plt.tight_layout()
     pdf.savefig()
@@ -170,7 +159,6 @@ def dry_mass(dict_current_axes, df_control_axes, dict_current_organs, df_control
     axs[1, 0].legend()
     axs[1, 0].set_xlim(tmin, tmax)
     axs[1, 0].set_ylabel('mstruct shoot (g)')
-    add_date_axis(axs[1, 0], meteo_data)
 
     # mstruct roots
     axs[1, 1].plot(df_control_organs[df_control_organs['organ'] == 'roots']['t'], df_control_organs[df_control_organs['organ'] == 'roots']['mstruct'], label='Control', color='black', linestyle='--')
@@ -179,7 +167,6 @@ def dry_mass(dict_current_axes, df_control_axes, dict_current_organs, df_control
     axs[1, 1].legend()
     axs[1, 1].set_xlim(tmin, tmax)
     axs[1, 1].set_ylabel('mstruct roots (g)')
-    add_date_axis(axs[1, 1], meteo_data)
 
     plt.tight_layout()
     pdf.savefig()
@@ -194,7 +181,6 @@ def dry_mass(dict_current_axes, df_control_axes, dict_current_organs, df_control
     axis.set_xlim(tmin, tmax)
     axis.set_ylim(0, 2)
     axis.set_ylabel('shoot : root ratio')
-    add_date_axis(axis, meteo_data)
     
     plt.tight_layout()
     pdf.savefig()
@@ -228,7 +214,6 @@ def N_mass(dict_current_axes, df_control_axes, dict_current_organs, df_control_o
     axs[1, 0].legend()
     axs[1, 0].set_xlim(tmin, tmax)
     axs[1, 0].set_ylabel('N content axis (g)')
-    add_date_axis(axs[1, 0], meteo_data)
 
     # N uptake
     axs[1, 1].plot(df_control_organs[df_control_organs['organ'] == 'roots']['t'], df_control_organs[df_control_organs['organ'] == 'roots']['Uptake_Nitrates'], label='Control', color='black', linestyle='--')
@@ -237,7 +222,6 @@ def N_mass(dict_current_axes, df_control_axes, dict_current_organs, df_control_o
     axs[1, 1].legend()
     axs[1, 1].set_xlim(tmin, tmax)
     axs[1, 1].set_ylabel('Nitrate uptake (µmol)')
-    add_date_axis(axs[1, 1], meteo_data)
 
     plt.tight_layout()
     pdf.savefig()
@@ -274,7 +258,6 @@ def surface(dict_current_elements, df_control_elements, tmin, tmax, pdf):
     axs[1, 0].legend()
     axs[1, 0].set_xlim(tmin, tmax)
     axs[1, 0].set_ylabel('Sheath green area (m²)')
-    add_date_axis(axs[1, 0], meteo_data)
 
     # Internode green area
     df_control_elements_internode = df_control_elements[df_control_elements.organ == 'internode']
@@ -285,7 +268,6 @@ def surface(dict_current_elements, df_control_elements, tmin, tmax, pdf):
     axs[1, 1].legend()
     axs[1, 1].set_xlim(tmin, tmax)
     axs[1, 1].set_ylabel('Internode green area (m²)')
-    add_date_axis(axs[1, 1], meteo_data)
 
     plt.tight_layout()
     pdf.savefig()
@@ -302,7 +284,6 @@ def height(dict_current_elements, df_control_elements, tmin, tmax, pdf):
     axis.legend()
     axis.set_xlim(tmin, tmax)
     axis.set_ylabel('Plant Height (m)')
-    add_date_axis(axis, meteo_data)
 
     plt.tight_layout()
     pdf.savefig()
@@ -489,16 +470,6 @@ def leaf_emergence(dict_current_hz, df_control_hz, pdf):
     axis.set_xlabel('N° de feuille')
     axis.set_ylabel('Temps emergence (hour)')
 
-    ax2 = axis.twinx()
-    ax2.set_yticks(axis.get_yticks())
-    
-    valid_ticks = [t for t in axis.get_yticks() if t in meteo_data.index]
-    if valid_ticks:
-        ax2.set_yticklabels(meteo_data.loc[valid_ticks]['Date'].dt.strftime('%d/%m'))
-        
-    ax2.yaxis.set_ticks_position('left')
-    ax2.yaxis.set_label_position('left')
-    ax2.spines['left'].set_position(('outward', 50))
 
     fig = axis.get_figure()
     plt.tight_layout()
@@ -548,11 +519,8 @@ if __name__ == '__main__':
         # 'Sim_lowN_4til_450N': r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\lowN\0.2m_450N\wheat'
 
         'Sim_LUBBAC_wheat' : r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\wheat_LUBBAC\wheat',
-        'Sim_default_meteo_LUBBAC' : r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_meteo_LUBBAC\wheat'
-          
-
-
-
+        'Sim_cndefault_meteo_LUBBAC' : r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_meteo_LUBBAC\wheat',
+        'Sim_LUBBAC_default_meteo' : r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\wheat_LUBBAC_defaultmeteo\wheat' 
 
     }
 
@@ -610,9 +578,13 @@ if __name__ == '__main__':
 
         # Load and filter data for each simulation
         df_ax = pd.read_csv(os.path.join(POSTPROCESSING, 'axes_postprocessing.csv'))
+        df_ax['t'] = df_ax['t'] - df_ax['t'].min()
         df_org = pd.read_csv(os.path.join(POSTPROCESSING, 'organs_postprocessing.csv'))
+        df_org['t'] = df_org['t'] - df_org['t'].min()
         df_elt = pd.read_csv(os.path.join(POSTPROCESSING, 'elements_postprocessing.csv'))
+        df_elt['t'] = df_elt['t'] - df_elt['t'].min()
         df_hz = pd.read_csv(os.path.join(POSTPROCESSING, 'hiddenzones_postprocessing.csv'))
+        df_hz['t'] = df_hz['t'] - df_hz['t'].min()
 
         # Update dictionaries with filtered data
         dict_current_axes[sim_name] = df_ax
@@ -623,9 +595,11 @@ if __name__ == '__main__':
         #load raw outputs for axes and elements
         OUTPUTS = os.path.join(path, 'brut')
         df_ax_outputs = pd.read_csv(os.path.join(OUTPUTS, 'axes_outputs.csv'))
+        df_ax_outputs['t'] = df_ax_outputs['t'] - df_ax_outputs['t'].min()
         dict_current_axes_outputs[sim_name] =  df_ax_outputs
 
         df_elt_outputs = pd.read_csv(os.path.join(OUTPUTS, 'elements_outputs.csv'))
+        df_elt_outputs['t'] = df_elt_outputs['t'] - df_elt_outputs['t'].min()
         dict_current_elements_outputs[sim_name] = df_elt_outputs
 
         
