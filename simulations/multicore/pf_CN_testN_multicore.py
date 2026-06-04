@@ -1,6 +1,6 @@
 import concurrent.futures
 import os
-from simulations.cn_wheat.wheat_soil3ds_rangeN import simulation
+from simulations.cn_wheat.wheat_soil3ds_rangeN_0til import simulation
 from postprocessing.wheat_postpro import w_postpro
 
 # Define the range of N values to test
