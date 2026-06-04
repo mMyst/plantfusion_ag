@@ -125,6 +125,7 @@ class Light_wrapper(object):
         }
 
         self.number_of_species = len(indexer.global_order)
+        self.i_vtk = 0
 
         # get grid dimensions of l-egume instances
         dxyz_legume = [0.0] * 3
@@ -249,11 +250,12 @@ class Light_wrapper(object):
             truesolartime=True,
             parunit=parunit,
         )
-
+        
         if self.writegeo:
             file_project_name = os.path.join(os.path.normpath(self.out_folder), "vtk", "plantfusion_")
-
-            self.i_vtk = int(day) * 100 + int(hour)
+            
+            self.i_vtk += 1
+            self.vtk_label = self.i_vtk*100000 +int(day) * 100 + int(hour)
             
             if self.lightmodel == "ratp":
                 printvoxels = True
@@ -262,7 +264,7 @@ class Light_wrapper(object):
 
             self.light.to_VTK(lighting=True, 
                                 path=file_project_name, 
-                                i=self.i_vtk, 
+                                i=self.vtk_label, 
                                 printtriangles=True, 
                                 printvoxels=printvoxels, 
                                 virtual_sensors=self.compute_sensors, 
@@ -275,15 +277,16 @@ class Light_wrapper(object):
             
             if self.compute_sensors:
                 scene_plantgl[0].save(
-                    os.path.join(self.out_folder, "plantgl", "scene_light_plantgl_" + str(self.i_vtk)) + ".bgeom"
+                    os.path.join(self.out_folder, "plantgl", "scene_light_plantgl_" + str(self.vtk_label)) + ".bgeom"
                 )
                 scene_plantgl[1].save(
-                    os.path.join(self.out_folder, "plantgl", "sensors_plantgl_" + str(self.i_vtk)) + ".bgeom"
+                    os.path.join(self.out_folder, "plantgl", "sensors_plantgl_" + str(self.vtk_label)) + ".bgeom"
                 )
             else:
                 scene_plantgl.save(
-                    os.path.join(self.out_folder, "plantgl", "scene_light_plantgl_" + str(self.i_vtk)) + ".bgeom"
+                    os.path.join(self.out_folder, "plantgl", "scene_light_plantgl_" + str(self.vtk_label)) + ".bgeom"
                 )
+
 
             
 
