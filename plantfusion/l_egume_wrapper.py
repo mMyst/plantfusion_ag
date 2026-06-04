@@ -128,7 +128,7 @@ class L_egume_wrapper(object):
 
             #definit une carto et plante order
 
-                my_carto = planter.legume_positions[0] #a quoi fait référence 0 ? est ce qu'on peut remplacer par compréhension de l'id legume dans le planter
+                my_carto = planter.legume_positions[self.indexer.legume_names.index(name)]
                 
                 #convert to cm (legume_positions should always be in m by default)
                 my_carto = [[value * 100 for value in sublist] for sublist in my_carto]

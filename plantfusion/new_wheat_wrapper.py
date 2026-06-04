@@ -196,7 +196,10 @@ class Wheat_wrapper(object):
         HIDDENZONES_POSTPROCESSING_FILENAME="hiddenzones_postprocessing.csv",
         ELEMENTS_POSTPROCESSING_FILENAME="elements_postprocessing.csv",
         SOILS_POSTPROCESSING_FILENAME="soils_postprocessing.csv",
-        rootdistribtype = "homogeneous"
+        rootdistribtype = "homogeneous",
+        coef_delay_til = 2.0,
+        coef_buffer_til = 0.5,
+        gaic = 0.16
     ) -> None:
         """Constructor, 
     
@@ -214,9 +217,9 @@ class Wheat_wrapper(object):
         self.nitrates_uptake_forced = nitrates_uptake_forced
         self.option_static = option_static
 
-        self.COEF_DELAY_TIL = 2 #TODO move as parameters
-        self.COEF_BUFFER_TIL = 1
-        self.GAIc=0.1
+        self.COEF_DELAY_TIL = coef_delay_til 
+        self.COEF_BUFFER_TIL = coef_buffer_til
+        self.GAIc= gaic
         self.GAIp=None #none by default, if used in mixed cropping, GAIp is calculated in the main simulation loop using the combined scene
 
         self.last_year_doy = 0
@@ -1119,7 +1122,7 @@ class Wheat_wrapper(object):
 
             for postprocessing_file_basename, postprocessing_filename, index_columns in (
                 (axes_postprocessing_file_basename, self.AXES_POSTPROCESSING_FILENAME, self.AXES_INDEX_COLUMNS),
-                (hiddenzones_postprocessing_file_basename, self.HIDDENZONES_POSTPROCESSING_FILENAME, self.HIDDENZONE_INDEX_COLUMNS),
+                (hiddenzones_postprocessing_file_basename, self.HIDDENZONES_POSTPROCESSING_FILENAME, self.HIDDENZONES_INDEX_COLUMNS),
                 (organs_postprocessing_file_basename, self.ORGANS_POSTPROCESSING_FILENAME, self.ORGANS_INDEX_COLUMNS),
                 (elements_postprocessing_file_basename, self.ELEMENTS_POSTPROCESSING_FILENAME, self.ELEMENTS_INDEX_COLUMNS),
                 (soils_postprocessing_file_basename, self.SOILS_POSTPROCESSING_FILENAME, self.SOILS_INDEX_COLUMNS),
@@ -1412,24 +1415,24 @@ class Wheat_wrapper(object):
                         # Photosynthesis
                         df_elt['Photosynthesis_tillers'] = df_elt['Photosynthesis'].fillna(0) * df_elt['nb_replications'].fillna(1.)
                         Tillers_Photosynthesis_Ag = df_elt.groupby(['t'], as_index=False).agg({'Photosynthesis_tillers': 'sum'})
-                        C_usages = pd.DataFrame({'t': Tillers_Photosynthesis_Ag['t']})
-                        C_usages['C_produced'] = np.cumsum(Tillers_Photosynthesis_Ag.Photosynthesis_tillers)
+                        C_usages = pandas.DataFrame({'t': Tillers_Photosynthesis_Ag['t']})
+                        C_usages['C_produced'] = numpy.cumsum(Tillers_Photosynthesis_Ag.Photosynthesis_tillers)
 
                         # Respiration
-                        C_usages['Respi_roots'] = np.cumsum(df_axe.C_respired_roots)
-                        C_usages['Respi_shoot'] = np.cumsum(df_axe.C_respired_shoot)
+                        C_usages['Respi_roots'] = numpy.cumsum(df_axe.C_respired_roots)
+                        C_usages['Respi_shoot'] = numpy.cumsum(df_axe.C_respired_shoot)
 
                         # Exudation
-                        C_usages['exudation'] = np.cumsum(df_axe.C_exudated.fillna(0))
+                        C_usages['exudation'] = numpy.cumsum(df_axe.C_exudated.fillna(0))
 
                         # Structural growth
                         C_consumption_mstruct_roots = df_roots.sucrose_consumption_mstruct.fillna(0) + df_roots.AA_consumption_mstruct.fillna(0) * AMINO_ACIDS_C_RATIO / AMINO_ACIDS_N_RATIO
-                        C_usages['Structure_roots'] = np.cumsum(C_consumption_mstruct_roots.reset_index(drop=True))
+                        C_usages['Structure_roots'] = numpy.cumsum(C_consumption_mstruct_roots.reset_index(drop=True))
 
                         df_hz['C_consumption_mstruct'] = df_hz.sucrose_consumption_mstruct.fillna(0) + df_hz.AA_consumption_mstruct.fillna(0) * AMINO_ACIDS_C_RATIO / AMINO_ACIDS_N_RATIO
                         df_hz['C_consumption_mstruct_tillers'] = df_hz['C_consumption_mstruct'] * df_hz['nb_replications']
                         C_consumption_mstruct_shoot = df_hz.groupby(['t'])['C_consumption_mstruct_tillers'].sum()
-                        C_usages['Structure_shoot'] = np.cumsum(C_consumption_mstruct_shoot.reset_index(drop=True)).apply(float)
+                        C_usages['Structure_shoot'] = numpy.cumsum(C_consumption_mstruct_shoot.reset_index(drop=True)).apply(float)
 
                         # Non structural C
                         df_phloem['C_NS'] = df_phloem.sucrose.fillna(0) + df_phloem.amino_acids.fillna(0) * AMINO_ACIDS_C_RATIO / AMINO_ACIDS_N_RATIO
@@ -1480,14 +1483,14 @@ class Wheat_wrapper(object):
                         df_elt['PARa_MJ'] = df_elt['PARa'] * df_elt['green_area'] * df_elt['nb_replications'] * 3600 / 4.6 * 10 ** -6  # Il faudrait idealement utiliser les calculcs green_area et PARa des talles
                         df_elt['RGa_MJ'] = df_elt['PARa'] * df_elt['green_area'] * df_elt['nb_replications'] * 3600 / 2.02 * 10 ** -6  # Il faudrait idealement utiliser les calculcs green_area et PARa des talles
                         PARa = df_elt.groupby(['day'])['PARa_MJ'].agg('sum')
-                        PARa_cum = np.cumsum(PARa)
+                        PARa_cum = numpy.cumsum(PARa)
                         days = df_elt['day'].unique()
 
                         sum_dry_mass_shoot = df_axe.groupby(['day'])['sum_dry_mass_shoot'].agg('max')
                         sum_dry_mass = df_axe.groupby(['day'])['sum_dry_mass'].agg('max')
 
-                        RUE_shoot = np.polyfit(PARa_cum, sum_dry_mass_shoot.dropna(), 1)[0]
-                        RUE_plant = np.polyfit(PARa_cum, sum_dry_mass.dropna(), 1)[0]
+                        RUE_shoot = numpy.polyfit(PARa_cum, sum_dry_mass_shoot.dropna(), 1)[0]
+                        RUE_plant = numpy.polyfit(PARa_cum, sum_dry_mass.dropna(), 1)[0]
 
                         fig, ax = plt.subplots()
                         ax.plot(PARa_cum, sum_dry_mass_shoot.dropna(), label='Shoot dry mass (g)')
