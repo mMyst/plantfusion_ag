@@ -8,12 +8,14 @@ from plantfusion.planter import Planter
 import time
 import datetime
 import os
+import math
 
 
 def simulation(
     in_folder_legume, in_folder_wheat, out_folder,
     start_wheat, simulation_length, id_usm, 
-    run_postprocessing=False, writegeo=False, geostep=1
+    run_postprocessing=False, run_graphs=False, writegeo=False, geostep=1,
+    wheatroot_type='profile',min_depth=None
 ):
     try:
         # Create target Directory
@@ -30,7 +32,7 @@ def simulation(
     legume_name = "legume"
     indexer = Indexer(global_order=[legume_name, wheat_name], wheat_names=[wheat_name], legume_names=[legume_name])
 
-    tillers_replications = {"T1": 0.5, "T2": 0.5, "T3": 0.5, "T4": 0.5}
+    tillers_replications = {"T1": 0.5, "T2": 0.5}
  
     sky = "turtle46"
     RERmax_vegetative_stages_example = {
@@ -87,7 +89,10 @@ def simulation(
         METEO_FILENAME='LUBBAC_H_24_25.csv',
         SENESCWHEAT_TIMESTEP=senescwheat_timestep,
         LIGHT_TIMESTEP=light_timestep,
-        SOIL_PARAMETERS_FILENAME="inputs_soil_legume/Parametres_plante_exemple.xls"
+        SOIL_PARAMETERS_FILENAME="inputs_soil_legume/Parametres_plante_exemple.xls",
+        AXES_INITIAL_STATE_FILENAME="axes_initial_state_2til.csv",
+        HIDDENZONES_INITIAL_STATE_FILENAME="hiddenzones_initial_state_2til.csv",
+        rootdistribtype=wheatroot_type
     )
 
     lighting = Light_wrapper(
@@ -97,24 +102,27 @@ def simulation(
         planter=planter, 
         indexer=indexer,
         legume_wrapper=legume,
-        writegeo=writegeo
+        writegeo=writegeo,
+        geostep=geostep,
     )
 
     soil = Soil_wrapper(in_folder=in_folder_legume, 
                         out_folder=out_folder, 
                         IDusm=id_usm,
-                        ongletconfigfile='LUBBAC', #à changer par un sol LUBBAC
+                        nameconfigfile='liste_usms_couplage.xls',
+                        ongletconfigfile='LUBBAC', 
                         legume_wrapper=legume, 
                         planter=planter, 
                         opt_residu=0, 
                         save_results=True)
-    soil_dimensions = [len(soil.soil.dxyz[i]) for i in [2,0,1] ]
     
     ##################
     ### SIMULATION ###
     ##################
 
     current_time_of_the_system = time.time()
+    clock = 0 #timestep code for the simulation, used for vtk filenames. format is yymmddhh
+    t_wheat = 0
     t_legume = 0
     wheat.start_time=wheat.meteo[wheat.meteo['Date']==start_wheat].index[0]
     nb_iter = int(wheat.meteo.loc[wheat.start_time, ["DOY"]].iloc[0] - legume.lsystem.DOYdeb)
@@ -157,8 +165,15 @@ def simulation(
     # planter.number_of_plants = save_planter_nb_plants
     
     lighting.i_vtk = lighting.i_vtk
+
+    wheat_t_count = 0
+    wheat_day_count = 0
+
     for t_wheat in range(wheat.start_time,wheat.start_time +simulation_length, wheat.SENESCWHEAT_TIMESTEP):
-        activate_legume = wheat.doy(t_wheat) != wheat.next_day_next_hour(t_wheat)
+        wheat_t_count += 1
+        print("cn_wheat timestep : "+str(wheat_t_count))
+              
+        activate_legume = wheat.doy(t_wheat,soil3ds = True) != wheat.next_day_next_hour(t_wheat)
         daylight = (t_wheat % light_timestep == 0) and (wheat.PARi_next_hours(t_wheat) > 0)
 
         if daylight or activate_legume:
@@ -185,6 +200,17 @@ def simulation(
 
             if activate_legume:
                 legume.light_results(legume.energy(), lighting)
+
+                wheat_day_count += 1 
+
+                if wheat.rootdistribtype == "bound" or wheat.rootdistribtype == "profile":
+                    min_depth = min_depth if min_depth is not None else 0.2 # unit : m
+                    explo_rate = 0.01 #1cm par jour en m, approx. from Kirkegaard et Lillet 2007
+
+                    wheat.rooting_depth = min(wheat_day_count * explo_rate + min_depth, soil.soil.dxyz[2][0] *len(soil.soil.dxyz[2]))
+                    wheat.roots_bound = min(math.ceil(wheat.rooting_depth/soil.soil.dxyz[2][0]), len(soil.soil.dxyz[2])) #renvoie la couche jusqu'à laquelle les racines peuvent aller
+      
+
 
                 soil_wheat_inputs = wheat.soil_inputs(soil, planter, lighting)
                 soil_legume_inputs = legume.soil_inputs()
@@ -215,20 +241,22 @@ def simulation(
 
 
     legume.end()
-    wheat.end(run_postprocessing=run_postprocessing)
+    wheat.end(run_postprocessing=run_postprocessing, run_graphs=run_graphs)
     soil.end()
 
 
 if __name__ == "__main__":
-    in_folder_legume = "inputs_soil_legume"
-    in_folder_wheat = "inputs_fspmwheat"
-    out_folder = "outputs/full_coupling_LUBBAC"
-    start_wheat='31/12/2024' #semis au 18/11/2024, 3 feuilles au 07/01/2025 d'après données. 31/12/2024 pour éviter pb doy, t init = 2904
-    simulation_length = 1900
+    in_folder_legume = "inputs_soil_legume" #debut luzerne le 30/09/2024
+    in_folder_wheat = "inputs_fspmwheat/forced_tillers_init"
+    out_folder = "outputs/WheatLuz_LUBBAC"
+    start_wheat='07/01/2025' #semis au 18/11/2024, 3 feuilles au 07/01/2025 d'après données. 31/12/2024 pour éviter pb doy, t init = 2904
+    simulation_length = 2500
     id_usm = 2 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale
     writegeo = True
-    geostep = 5
-    run_postprocessing = False
+    geostep = 10
+    run_postprocessing = True
+    run_graphs = True
     simulation(in_folder_legume, in_folder_wheat, out_folder, 
-               start_wheat, simulation_length, id_usm, 
-               writegeo=writegeo, geostep=geostep, run_postprocessing=run_postprocessing)
+               start_wheat, simulation_length, id_usm, min_depth=0.2,
+               writegeo=writegeo, geostep=geostep, 
+               run_graphs=run_graphs, run_postprocessing=run_postprocessing)

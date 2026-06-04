@@ -1,9 +1,8 @@
-from plantfusion.new_wheat_wrapper import Wheat_wrapper
+from plantfusion.wheat_wrapper import Wheat_wrapper
 from plantfusion.light_wrapper import Light_wrapper
 from plantfusion.soil_wrapper import Soil_wrapper
-from plantfusion.planter import Planter
 from plantfusion.indexer import Indexer
-
+from plantfusion.planter import Planter
 
 import time
 import datetime
@@ -11,20 +10,30 @@ import os
 import math
 
 
-def simulation(in_folder, out_folder, 
-               start_wheat=None, simulation_length=2500, 
-               write_geo=False, run_postprocessing=False, run_graphs = False, geostep=1,
-               rootdistribtype = 'homogeneous',min_depth=None):
+def simulation(
+    in_folder_legume, in_folder_wheat, out_folder,
+    start_wheat, simulation_length, id_usm, 
+    run_postprocessing=False, run_graphs=False, writegeo=False, geostep=1,
+    wheatroot_type='profile',min_depth=None
+):
     try:
         # Create target Directory
-        os.makedirs(os.path.normpath(out_folder))
+        os.mkdir(os.path.normpath(out_folder))
         print("Directory ", os.path.normpath(out_folder), " Created ")
     except FileExistsError:
         print("Directory ", os.path.normpath(out_folder), " already exists")
 
+    ######################
+    ### INITIALIZATION ###
+    ######################
+
+    wheat_name = "wheat"
+    
+    indexer = Indexer(global_order=[wheat_name], wheat_names=[wheat_name])
+
     tillers_replications = {"T1": 0.5, "T2": 0.5, "T3": 0.5, "T4": 0.5}
-    plant_density = {1: 250}
-    sky = "turtle46" #[4, 5, "soc"]
+ 
+    sky = "turtle46"
     RERmax_vegetative_stages_example = {
         "elongwheat": {
             "RERmax": {5: 3.35e-06, 6: 2.1e-06, 7: 2.0e-06, 8: 1.83e-06, 9: 1.8e-06, 10: 1.65e-06, 11: 1.56e-06}
@@ -32,38 +41,67 @@ def simulation(in_folder, out_folder,
     }
     senescwheat_timestep = 1
     light_timestep = 4
+  
+    ###NEW METHOD : FORCED PLANTER
+    
+        # Définir les paramètres d'entrée
+    col_pattern = (wheat_name, "inter_row", wheat_name, wheat_name, "inter_row", wheat_name)
+  
+    n_rows = 6
+    n_cols = 6
+    cell_size = 0.05 # Taille de la cellule en mètres
+    
+    offset = {wheat_name: 0.15*2}
+    noise = {wheat_name:0.001}
 
-    plants_name = "wheat"
-    index_log = Indexer(global_order=[plants_name], wheat_names=[plants_name])
+    
+    planter = Planter(indexer=indexer, 
+                      generation_type='grid_forced',
+                      n_rows=n_rows,
+                      n_cols= n_cols,
+                      cell_size=cell_size,
+                      col_pattern=col_pattern,
+                      save_wheat_positions=True)
 
-    planter = Planter(generation_type="default", indexer=index_log, inter_rows=0.15, plant_density=plant_density)
 
     wheat = Wheat_wrapper(
-        in_folder=in_folder,
+        in_folder=in_folder_wheat,
         out_folder=out_folder,
         planter=planter,
-        indexer=index_log,
+        indexer=indexer,
         external_soil_model=True,
         nitrates_uptake_forced=False,
-        update_parameters_all_models=RERmax_vegetative_stages_example,
         tillers_replications=tillers_replications,
+        update_parameters_all_models=RERmax_vegetative_stages_example,
+        METEO_FILENAME='LUBBAC_H_24_25.csv',
         SENESCWHEAT_TIMESTEP=senescwheat_timestep,
         LIGHT_TIMESTEP=light_timestep,
         SOIL_PARAMETERS_FILENAME="inputs_soil_legume/Parametres_plante_exemple.xls",
-        rootdistribtype= rootdistribtype
+        rootdistribtype=wheatroot_type
     )
-
 
     lighting = Light_wrapper(
         lightmodel="caribu", 
         out_folder=out_folder, 
         sky=sky,
         planter=planter, 
-        indexer=index_log,
-        writegeo=write_geo
+        indexer=indexer,
+        writegeo=writegeo
     )
 
-    soil = Soil_wrapper(in_folder="inputs_soil_legume", out_folder=out_folder, IDusm=302010, planter=planter, save_results=True) #standard usm is 6050
+    soil = Soil_wrapper(in_folder=in_folder_legume, 
+                        out_folder=out_folder, 
+                        nameconfigfile='liste_usms_couplage.xls',
+                        IDusm=id_usm,
+                        ongletconfigfile='LUBBAC',
+                        planter=planter, 
+                        opt_residu=0, 
+                        save_results=True)
+    
+    
+    ##################
+    ### SIMULATION ###
+    ##################
 
     current_time_of_the_system = time.time()
 
@@ -74,10 +112,10 @@ def simulation(in_folder, out_folder,
 
     for t in range(wheat.start_time, wheat.start_time + simulation_length, wheat.SENESCWHEAT_TIMESTEP):
 
-        if  bool(wheat.g.property('geometry')) and (((t % light_timestep == 0) and (wheat.PARi_next_hours(t) > 0)) or (wheat.doy(t) != wheat.next_day_next_hour(t))):
+        if ((t % light_timestep == 0) and (wheat.PARi_next_hours(t) > 0)) or (wheat.doy(t) != wheat.next_day_next_hour(t)):
             wheat_input, stems = wheat.light_inputs(planter)
 
-            if  ((write_geo==True) and (t%geostep*light_timestep == 0 )) :
+            if  ((writegeo==True) and (t%geostep*light_timestep == 0 )) :
                 lighting.writegeo=True 
             else:
                 lighting.writegeo=False
@@ -96,7 +134,7 @@ def simulation(in_folder, out_folder,
                     min_depth = min_depth if min_depth is not None else 0.2 # unit : m
                     explo_rate = 0.01 #1cm par jour en m, approx. from Kirkegaard et Lillet 2007
 
-                    wheat.rooting_depth = day_count * explo_rate + min_depth
+                    wheat.rooting_depth = min(day_count * explo_rate + min_depth, soil.soil.dxyz[2][0] *len(soil.soil.dxyz[2]))
                     wheat.roots_bound = min(math.ceil(wheat.rooting_depth/soil.soil.dxyz[2][0]), len(soil.soil.dxyz[2])) #renvoie la couche jusqu'à laquelle les racines peuvent aller
             
 
@@ -130,24 +168,18 @@ def simulation(in_folder, out_folder,
     soil.end()
 
 
-
 if __name__ == "__main__":
-    in_folder = "inputs_fspmwheat"
-    rootdistribtype = "profile" #"bound" or "homogeneous" or "profile"
-    min_depth  = 0.2 #m 
-    #out_folder = "outputs/cnwheat_soil3ds/"+rootdistribtype+"/"+str(min_depth)+"m"
-    out_folder = "outputs/cnwheat_soil3ds/"+rootdistribtype+"/302010_N"
-    start_wheat = None  #commence le 17/12/1998 dans CN wheat normal (351 DOY)
-    simulation_length = 4000 #2500
-    write_geo = True
-    geostep = 100
-    run_postprocessing= True
+    in_folder_legume = "inputs_soil_legume"
+    in_folder_wheat = "inputs_fspmwheat"
+    out_folder = "outputs/wheat_LUBBAC"
+    start_wheat='18/11/2024' #semis au 18/11/2024, 3 feuilles au 07/01/2025 d'après données. 31/12/2024 pour éviter pb doy, t init = 2904
+    simulation_length = 4000
+    id_usm = 2 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale => only relevant for soil parameters here
+    writegeo = True
+    geostep = 10
+    run_postprocessing = True
     run_graphs = True
-
-    
-
-    simulation(in_folder, out_folder, 
-               start_wheat, simulation_length=simulation_length,
-                write_geo=write_geo, geostep=geostep, 
-                rootdistribtype=rootdistribtype, min_depth=min_depth,
-                run_postprocessing=run_postprocessing, run_graphs=run_graphs)
+    simulation(in_folder_legume, in_folder_wheat, out_folder, 
+               start_wheat, simulation_length, id_usm, min_depth=0.2,
+               writegeo=writegeo, geostep=geostep, 
+               run_postprocessing=run_postprocessing, run_graphs=run_graphs)

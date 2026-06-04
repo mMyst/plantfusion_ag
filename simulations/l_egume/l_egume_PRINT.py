@@ -108,7 +108,7 @@ def simulation(in_folder, out_folder, id_usm, writegeo, image_path):
 
 if __name__ == "__main__":
     in_folder = "inputs_soil_legume"
-    image_path = 'C:\\Users\\agrumel\\Pictures\\Saved Pictures\\newyear.png'
+    image_path = 'C:\\Users\\agrumel\\Pictures\\Saved Pictures\\urp3f.png'
     out_folder = "outputs/legume_PRINT/"+ Path(image_path).stem
     onglet='LUCOS'
     id_usm = 1

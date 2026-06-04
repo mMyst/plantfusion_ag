@@ -1,4 +1,5 @@
 from plantfusion.new_wheat_wrapper import Wheat_wrapper
+from plantfusion.l_egume_wrapper import L_egume_wrapper
 from plantfusion.light_wrapper import Light_wrapper
 from plantfusion.soil_wrapper import Soil_wrapper
 from plantfusion.indexer import Indexer
@@ -74,7 +75,7 @@ def simulation(
         nitrates_uptake_forced=False,
         tillers_replications=tillers_replications,
         update_parameters_all_models=RERmax_vegetative_stages_example,
-        METEO_FILENAME='LUBBAC_H_24_25.csv',
+        METEO_FILENAME="meteo_Ljutovac2002_since_sowing_on_19981015.csv",
         SENESCWHEAT_TIMESTEP=senescwheat_timestep,
         LIGHT_TIMESTEP=light_timestep,
         SOIL_PARAMETERS_FILENAME="inputs_soil_legume/Parametres_plante_exemple.xls",
@@ -106,7 +107,6 @@ def simulation(
     ##################
     ### SIMULATION ###
     ##################
-
     try :
         current_time_of_the_system = time.time()
 
@@ -116,8 +116,6 @@ def simulation(
         day_count = 0
 
         for t in range(wheat.start_time, wheat.start_time + simulation_length, wheat.SENESCWHEAT_TIMESTEP):
-
-
 
             if (bool(wheat.g.property('geometry')) and (((t % light_timestep == 0) and (wheat.PARi_next_hours(t) > 0)) or (wheat.doy(t) != wheat.next_day_next_hour(t)))):
                 wheat_input, stems = wheat.light_inputs(planter)
@@ -166,8 +164,6 @@ def simulation(
 
             print("Step "+ str(t-wheat.start_time)+"/"+str(simulation_length))
             wheat.run(t)
-            
-
 
         execution_time = int(time.time() - current_time_of_the_system)
         print("\n" "Simulation run in {}".format(str(datetime.timedelta(seconds=execution_time))))
@@ -176,21 +172,22 @@ def simulation(
         print(wheat.tillers_replications)
         soil.end()
         wheat.end(run_postprocessing=run_postprocessing, run_graphs=run_graphs)
-        
+
+
 
 if __name__ == "__main__":
     in_folder_legume = "inputs_soil_legume"
     in_folder_wheat = "inputs_fspmwheat"
-    out_folder = "outputs/wheat_LUBBAC_emergence"
-    start_wheat='18/11/2024' #semis au 18/11/2024, 3 feuilles au 07/01/2025 d'après données. 31/12/2024 pour éviter pb doy, t init = 2904
+    out_folder = "outputs/wheat_LUBBAC_defaultmeteo_emergence"
+    start_wheat=None
     simulation_length = 4000
-    id_usm = 2 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale, all with perfect irrigation => only relevant for soil parameters here
+    id_usm = 2 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale => only relevant for soil parameters here
     writegeo = True
-    geostep = 1
+    geostep = 10
     run_postprocessing = True
     run_graphs = True
     simulation(in_folder_legume, in_folder_wheat, out_folder, 
-               start_wheat, simulation_length, id_usm, min_depth=0.01,
+               start_wheat, simulation_length, id_usm, min_depth=0.2,
                writegeo=writegeo, geostep=geostep, 
-                coef_delay_til = 2.0, coef_buffer_til = 0.5, gaic = 0.16,
+               coef_delay_til = 2.0, coef_buffer_til = 0.5, gaic = 0.16,
                run_postprocessing=run_postprocessing, run_graphs=run_graphs)
