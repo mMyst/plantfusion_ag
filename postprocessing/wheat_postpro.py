@@ -1,4 +1,4 @@
-from plantfusion.wheat_wrapper import Wheat_wrapper
+from plantfusion.new_wheat_wrapper import Wheat_wrapper
 from plantfusion.indexer import Indexer
 from plantfusion.planter import Planter
 
@@ -52,5 +52,5 @@ def w_postpro(out_folder, meteo_file =  "meteo_Ljutovac2002.csv", run_postproces
 
 if __name__ == "__main__":
     #default folder : r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default'
-    out_folder = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default'
-    w_postpro(out_folder, meteo_file='Lusignan_H_21-23.csv',run_postprocessing=True, run_graphs=True)
+    out_folder = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\wheat_LUBBAC_emergence'
+    w_postpro(out_folder, meteo_file='LUBBAC_H_24_25_capteurs.csv',run_postprocessing=True, run_graphs=True)
