@@ -29,13 +29,13 @@ def simulation(in_folder, onglet, config_file, out_folder, id_usm, write_geo=Fal
 
     # lumiere avec caribu
     sky = "turtle46"
-    sky = "inputs_soil_legume/sky_5.data"
 
 
     ###PLANTER
            # Définir les paramètres d'entrée
     col_pattern = ("inter_row", "inter_row",legume_name, legume_name, "inter_row", "inter_row")
-    col_pattern = (legume_name,legume_name,legume_name,legume_name,legume_name,legume_name)
+    col_pattern = (legume_name, legume_name, legume_name, legume_name, legume_name, legume_name)
+
 
     n_rows = 6
     n_cols = 6
@@ -53,7 +53,7 @@ def simulation(in_folder, onglet, config_file, out_folder, id_usm, write_geo=Fal
                       col_pattern=col_pattern)
 
 
-    legume_caribu = L_egume_wrapper(
+    legume = L_egume_wrapper(
         name=legume_name, 
         indexer=indexer, 
         in_folder=in_folder, 
@@ -66,22 +66,22 @@ def simulation(in_folder, onglet, config_file, out_folder, id_usm, write_geo=Fal
     
     )
     
-    lighting_caribu = Light_wrapper(
-        lightmodel="caribu",
+    lighting = Light_wrapper(
+        lightmodel="riri5",
         out_folder=out_folder,
         indexer=indexer, 
         planter=planter, 
-        legume_wrapper=legume_caribu,
+        legume_wrapper=legume,
         sky=sky,
         writegeo=write_geo,
         geostep=geostep,
     )
 
-    soil_caribu = Soil_wrapper(in_folder = in_folder,
+    soil = Soil_wrapper(in_folder = in_folder,
                                out_folder=out_folder, 
                                nameconfigfile= config_file,
                                ongletconfigfile= onglet,
-                               legume_wrapper=legume_caribu,  
+                               legume_wrapper=legume,  
                                planter=planter,
                                save_results= True)
 
@@ -89,62 +89,65 @@ def simulation(in_folder, onglet, config_file, out_folder, id_usm, write_geo=Fal
 
     try:
         current_time_of_the_system = time.time()
-        for t in range(legume_caribu.lsystem.derivationLength):
+        for t in range(legume.lsystem.derivationLength):
         
-            legume_caribu.derive(t)
+            legume.derive(t)
 
-            lighting_caribu.writegeo=False
-            if t%geostep == 0 :
-                lighting_caribu.writegeo=True 
+            #lighting.writegeo=False
+            #if t%geostep == 0 :
+            #    lighting.writegeo=True 
 
             
             ### CARIBU
-            scene_legume = legume_caribu.light_inputs(elements="triangles")
+
+            scene_legume = legume.light_inputs(elements="voxels")
             start = time.time()
-            lighting_caribu.run(
-                scenes=[scene_legume], day=legume_caribu.doy(), parunit="RG"
-            )
+            lighting.run(scenes=[scene_legume], energy=legume.energy(), day=legume.doy(), parunit="RG")
+
+
             caribu_time = time.time() - start
-            legume_caribu.light_results(legume_caribu.energy(), lighting_caribu)
+
+            legume.light_results(legume.energy(), lighting)
 
             (
                 N_content_roots_per_plant,
                 roots_length_per_plant_per_soil_layer,
                 plants_soil_parameters,
                 plants_light_interception,
-            ) = legume_caribu.soil_inputs()
+            ) = legume.soil_inputs()
 
-            soil_caribu.run(
-                legume_caribu.doy(),
+            soil.run(
+                legume.doy(),
                 [N_content_roots_per_plant],
                 [roots_length_per_plant_per_soil_layer],
                 [plants_soil_parameters],
                 [plants_light_interception],
             )
-            legume_caribu.soil_results(soil_caribu.results, planter)
+            legume.soil_results(soil.results, planter)
 
-            legume_caribu.run()
+            legume.run()
 
-            print("Lighting running time | CARIBU: ", caribu_time)
+            print("Lighting running time | ",lighting.lightmodel," : ", caribu_time)
 
         execution_time = int(time.time() - current_time_of_the_system)
         print("\n" "Simulation run in {}".format(str(datetime.timedelta(seconds=execution_time))))
 
     finally:
-        legume_caribu.end()
-        soil_caribu.end()  
+        legume.end()
+        soil.end()  
 
 
 
 
 if __name__ == "__main__":
     in_folder = "inputs_soil_legume"
-    out_folder = "outputs/legume_LUBBAC_brake05"
+    out_folder = "outputs/legume_LUBBAC_riri_gaetan"
     config_file = 'liste_usms_couplage.xls'
     onglet='LUBBAC' #repiquage le 30/09, départ de la sim
     id_usm=12 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale, all with perfect irrigation
+    #TODO #11 reg meteo capteurs, #12 noreg meteo capteurs
     write_geo=True
-    geostep=1
+    geostep=10
 
     simulation(in_folder, onglet, config_file, out_folder, id_usm, write_geo=write_geo, geostep=geostep)
     #stade 1F le 14/10 => caler le semis en fonction
