@@ -1379,7 +1379,8 @@ class Wheat_wrapper(object):
                     df_elt['day'] = df_elt['t'] // 24 + 1
                     df_elt['sum_respi_tillers'] = df_elt['sum_respi'] * df_elt['nb_replications']
                     Shoot_respiration = df_elt.groupby(['day'])['sum_respi_tillers'].agg('sum')
-                    Net_Photosynthesis = Total_Photosynthesis - Shoot_respiration
+                    Net_Photosynthesis = (Total_Photosynthesis - Shoot_respiration).fillna(0)
+
 
                     share_net_roots_live = Unloading_Sucrose_tot / Net_Photosynthesis * 100
 
@@ -1423,7 +1424,7 @@ class Wheat_wrapper(object):
                         C_usages['Respi_shoot'] = numpy.cumsum(df_axe.C_respired_shoot)
 
                         # Exudation
-                        C_usages['exudation'] = numpy.cumsum(df_axe.C_exudated.fillna(0))
+                        #C_usages['exudation'] = numpy.cumsum(df_axe.C_exudated.fillna(0))
 
                         # Structural growth
                         C_consumption_mstruct_roots = df_roots.sucrose_consumption_mstruct.fillna(0) + df_roots.AA_consumption_mstruct.fillna(0) * AMINO_ACIDS_C_RATIO / AMINO_ACIDS_N_RATIO
@@ -1451,32 +1452,32 @@ class Wheat_wrapper(object):
                         df_roots['C_NS'] = df_roots.sucrose.fillna(0) + df_roots.amino_acids.fillna(0) * AMINO_ACIDS_C_RATIO / AMINO_ACIDS_N_RATIO
 
                         C_NS_autre = df_roots.set_index('t').C_NS.add(C_elt.C_NS_tillers, fill_value=0).add(C_hz.C_NS_tillers, fill_value=0)
-                        C_NS_autre_init = C_NS_autre - C_NS_autre[0]
+                        C_NS_autre_init = C_NS_autre - C_NS_autre.iloc[0]
                         C_usages['NS_other'] = C_NS_autre_init.reset_index(drop=True)
 
                         # Total
-                        C_usages['C_budget'] = (C_usages.Respi_roots + C_usages.Respi_shoot + C_usages.exudation + C_usages.Structure_roots + C_usages.Structure_shoot + C_usages.NS_phloem + C_usages.NS_other) / \
-                                            C_usages.C_produced
+                        # C_usages['C_budget'] = (C_usages.Respi_roots + C_usages.Respi_shoot + C_usages.exudation + C_usages.Structure_roots + C_usages.Structure_shoot + C_usages.NS_phloem + C_usages.NS_other) / \
+                        #                     C_usages.C_produced
 
                         # ----- Graph
-                        fig, ax = plt.subplots()
-                        ax.plot(C_usages.t, C_usages.Structure_shoot / C_usages.C_produced * 100,
-                                label=u'Structural mass - Shoot', color='g')
-                        ax.plot(C_usages.t, C_usages.Structure_roots / C_usages.C_produced * 100,
-                                label=u'Structural mass - Roots', color='r')
-                        ax.plot(C_usages.t, (C_usages.NS_phloem + C_usages.NS_other) / C_usages.C_produced * 100, label=u'Non-structural C', color='darkorange')
-                        ax.plot(C_usages.t, (C_usages.Respi_roots + C_usages.Respi_shoot) / C_usages.C_produced * 100, label=u'C loss by respiration', color='b')
-                        ax.plot(C_usages.t, C_usages.exudation / C_usages.C_produced * 100, label=u'C loss by exudation', color='c')
+                        # fig, ax = plt.subplots()
+                        # ax.plot(C_usages.t, C_usages.Structure_shoot / C_usages.C_produced * 100,
+                        #         label=u'Structural mass - Shoot', color='g')
+                        # ax.plot(C_usages.t, C_usages.Structure_roots / C_usages.C_produced * 100,
+                        #         label=u'Structural mass - Roots', color='r')
+                        # ax.plot(C_usages.t, (C_usages.NS_phloem + C_usages.NS_other) / C_usages.C_produced * 100, label=u'Non-structural C', color='darkorange')
+                        # ax.plot(C_usages.t, (C_usages.Respi_roots + C_usages.Respi_shoot) / C_usages.C_produced * 100, label=u'C loss by respiration', color='b')
+                        # ax.plot(C_usages.t, C_usages.exudation / C_usages.C_produced * 100, label=u'C loss by exudation', color='c')
 
-                        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-                        ax.set_xlabel('Time (h)')
-                        ax.set_ylabel(u'Carbon usages : Photosynthesis (%)')
-                        ax.set_ylim(bottom=0, top=100.)
+                        # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+                        # ax.set_xlabel('Time (h)')
+                        # ax.set_ylabel(u'Carbon usages : Photosynthesis (%)')
+                        # ax.set_ylim(bottom=0, top=100.)
 
-                        fig.suptitle(u'Total cumulated usages are ' + str(round(C_usages.C_budget.tail(1) * 100, 0)) + u' % of Photosynthesis')
+                        # fig.suptitle(u'Total cumulated usages are ' + str(round(C_usages.C_budget.tail(1) * 100, 0)) + u' % of Photosynthesis')
 
-                        plt.savefig(os.path.join(GRAPHS_DIRPATH, 'C_usages_cumulated.PNG'), format='PNG', bbox_inches='tight')
-                        plt.close()
+                        # plt.savefig(os.path.join(GRAPHS_DIRPATH, 'C_usages_cumulated.PNG'), format='PNG', bbox_inches='tight')
+                        # plt.close()
 
                     # 6) RUE
                     if not df_elt.empty:
@@ -1489,8 +1490,8 @@ class Wheat_wrapper(object):
                         sum_dry_mass_shoot = df_axe.groupby(['day'])['sum_dry_mass_shoot'].agg('max')
                         sum_dry_mass = df_axe.groupby(['day'])['sum_dry_mass'].agg('max')
 
-                        RUE_shoot = numpy.polyfit(PARa_cum, sum_dry_mass_shoot.dropna(), 1)[0]
-                        RUE_plant = numpy.polyfit(PARa_cum, sum_dry_mass.dropna(), 1)[0]
+                        # RUE_shoot = numpy.polyfit(PARa_cum, sum_dry_mass_shoot.dropna(), 1)[0]
+                        # RUE_plant = numpy.polyfit(PARa_cum, sum_dry_mass.dropna(), 1)[0]
 
                         fig, ax = plt.subplots()
                         ax.plot(PARa_cum, sum_dry_mass_shoot.dropna(), label='Shoot dry mass (g)')
@@ -1499,8 +1500,8 @@ class Wheat_wrapper(object):
                         ax.set_xlabel('Cumulative absorbed PAR (MJ)')
                         ax.set_ylabel('Dry mass (g)')
                         ax.set_title('RUE')
-                        plt.text(max(PARa_cum) * 0.02, max(sum_dry_mass) * 0.95, 'RUE shoot : {0:.2f} , RUE plant : {1:.2f}'.format(round(RUE_shoot, 2), round(RUE_plant, 2)))
-                        plt.savefig(os.path.join(GRAPHS_DIRPATH, 'RUE.PNG'), dpi=200, format='PNG', bbox_inches='tight')
+                        # plt.text(max(PARa_cum) * 0.02, max(sum_dry_mass) * 0.95, 'RUE shoot : {0:.2f} , RUE plant : {1:.2f}'.format(round(RUE_shoot, 2), round(RUE_plant, 2)))
+                        # plt.savefig(os.path.join(GRAPHS_DIRPATH, 'RUE.PNG'), dpi=200, format='PNG', bbox_inches='tight')
 
                         fig, ax = plt.subplots()
                         ax.plot(days, sum_dry_mass_shoot.dropna(), label='Shoot dry mass (g)')
