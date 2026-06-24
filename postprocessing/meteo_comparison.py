@@ -95,8 +95,9 @@ def compare_meteo_files(meteo_paths, output_pdf='meteo_comparison.pdf'):
 if __name__ == "__main__":
     # Define the paths to the meteo files you want to compare
     cnwheat_meteo_files = {
-        'Ljutovac2002': os.path.join('inputs_fspmwheat', 'meteo_Ljutovac2002.csv'),
+        'Ljutovac2002': os.path.join('inputs_fspmwheat', 'meteo_Ljutovac2002_since_sowing_on_19981015.csv'),
         'LUBBAC': os.path.join('inputs_fspmwheat', 'LUBBAC_H_24_25.csv'),
+        'LUBBAC_capteurs': os.path.join('inputs_fspmwheat', 'LUBBAC_H_24_25_capteurs.csv'),
 
         # Add other paths as needed
     }

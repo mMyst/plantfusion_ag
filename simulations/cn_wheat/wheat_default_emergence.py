@@ -40,7 +40,7 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=4000, w
         planter=planter,
         indexer=index_log,
         external_soil_model=False,
-        nitrates_uptake_forced=True,
+        nitrates_uptake_forced=False,
         N_fertilizations=N_fertilizations,
         tillers_replications=tillers_replications,
         update_parameters_all_models=RERmax_vegetative_stages_example,
@@ -62,7 +62,7 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=4000, w
         current_time_of_the_system = time.time()
 
         if start_wheat is not None: 
-            wheat.start_time=wheat.meteo[wheat.meteo['Date']==start_wheat].index[0]
+            wheat.start_time=int(wheat.meteo[wheat.meteo['Date']==start_wheat].index[0])
 
         for t in range(wheat.start_time, wheat.start_time+simulation_length, wheat.SENESCWHEAT_TIMESTEP):
             if (t % light_timestep == 0) and (wheat.PARi_next_hours(t) > 0) and bool(wheat.g.property('geometry')):

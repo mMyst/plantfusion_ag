@@ -74,7 +74,7 @@ def simulation(
         nitrates_uptake_forced=False,
         tillers_replications=tillers_replications,
         update_parameters_all_models=RERmax_vegetative_stages_example,
-        METEO_FILENAME='LUBBAC_H_24_25.csv',
+        METEO_FILENAME='LUBBAC_H_24_25_capteurs.csv',
         SENESCWHEAT_TIMESTEP=senescwheat_timestep,
         LIGHT_TIMESTEP=light_timestep,
         SOIL_PARAMETERS_FILENAME="inputs_soil_legume/Parametres_plante_exemple.xls",
@@ -183,7 +183,7 @@ if __name__ == "__main__":
     in_folder_wheat = "inputs_fspmwheat"
     out_folder = "outputs/wheat_LUBBAC_emergence"
     start_wheat='18/11/2024' #semis au 18/11/2024, 3 feuilles au 07/01/2025 d'après données. 31/12/2024 pour éviter pb doy, t init = 2904
-    simulation_length = 4000
+    simulation_length = 3370 #def is 4000. 3370 matches the max thermal age of the default CNwheat simulation
     id_usm = 2 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale, all with perfect irrigation => only relevant for soil parameters here
     writegeo = True
     geostep = 1

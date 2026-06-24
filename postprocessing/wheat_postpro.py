@@ -53,4 +53,7 @@ def w_postpro(out_folder, meteo_file =  "meteo_Ljutovac2002.csv", run_postproces
 if __name__ == "__main__":
     #default folder : r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default'
     out_folder = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\wheat_LUBBAC_emergence'
+    out_folder = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\cnwheat_default_emergence_november'
+    #w_postpro(out_folder, meteo_file='meteo_Ljutovac2002_since_sowing_on_19981015.csv',run_postprocessing=True, run_graphs=True)
     w_postpro(out_folder, meteo_file='LUBBAC_H_24_25_capteurs.csv',run_postprocessing=True, run_graphs=True)
+#'LUBBAC_H_24_25_capteurs.csv'
