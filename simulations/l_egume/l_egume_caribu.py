@@ -5,6 +5,9 @@ from plantfusion.planter import Planter
 from plantfusion.indexer import Indexer
 from plantfusion.utils import create_child_folder
 
+import numpy as np
+
+
 import os
 import time
 import datetime
@@ -53,6 +56,7 @@ def simulation(in_folder, out_folder, id_usm, write_geo=False):
 
     light_data = {"epsi": [], "parip": [], "t": []}
 
+    histo_restrans_caribu = []
 
     try:
         current_time_of_the_system = time.time()
@@ -87,7 +91,8 @@ def simulation(in_folder, out_folder, id_usm, write_geo=False):
             legume_caribu.soil_results(soil_caribu.results, planter)
 
             newpars_caribu = legume_caribu.res_trans[-1]/legume_caribu.lsystem.tag_loop_inputs[15]
-
+            
+            histo_restrans_caribu.append(legume_caribu.res_trans.copy())
             legume_caribu.run()
 
             print("Lighting running time |  CARIBU: ", caribu_time)
@@ -97,11 +102,13 @@ def simulation(in_folder, out_folder, id_usm, write_geo=False):
 
     finally:
         legume_caribu.end()
+        np.save(os.path.join(os.path.normpath(out_folder),"historique_restrans_caribu.npy"), np.array(histo_restrans_caribu))
+
 
 
 if __name__ == "__main__":
     in_folder = "inputs_soil_legume"
-    out_folder = "outputs/legume_caribu_brake05"
-    write_geo = True
+    out_folder = "outputs/legume_caribu_buggrid"
+    write_geo = False
 
     simulation(in_folder, out_folder, 1711, write_geo)

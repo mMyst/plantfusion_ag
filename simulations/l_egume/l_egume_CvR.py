@@ -5,6 +5,8 @@ from plantfusion.planter import Planter
 from plantfusion.indexer import Indexer
 from plantfusion.utils import create_child_folder
 
+import numpy as np
+
 import os
 import time
 import datetime
@@ -59,6 +61,9 @@ def simulation(in_folder, out_folder, id_usm, write_geo=False):
 
     light_data = {"epsi": [], "parip": [], "t": []}
 
+    histo_restrans_caribu = []
+    histo_restrans_default = []
+
 
     try:
         current_time_of_the_system = time.time()
@@ -67,10 +72,10 @@ def simulation(in_folder, out_folder, id_usm, write_geo=False):
             legume_caribu.derive(t)
 
             ### DEFAULT + PASSIVE
-            scene_legume = legume_default.light_inputs(elements="triangles")
-            passive_lighting(
-                light_data, legume_default.energy(), legume_default.doy(), scene_legume, legume_default, lighting_caribu
-            )
+            # scene_legume = legume_default.light_inputs(elements="triangles")
+            # passive_lighting(
+            #     light_data, legume_default.energy(), legume_default.doy(), scene_legume, legume_default, lighting_caribu
+            # )
 
             scene_legume = legume_default.light_inputs(elements="voxels")
             start = time.time()
@@ -120,8 +125,11 @@ def simulation(in_folder, out_folder, id_usm, write_geo=False):
             )
             legume_caribu.soil_results(soil_caribu.results, planter)
 
-            newpars_caribu = legume_caribu.res_trans[-1]/legume_caribu.lsystem.tag_loop_inputs[15]
-            newpars_default = legume_default.res_trans[-1]/legume_default.lsystem.tag_loop_inputs[15]
+            # newpars_caribu = legume_caribu.res_trans[-1]/legume_caribu.lsystem.tag_loop_inputs[15]
+            # newpars_default = legume_default.res_trans[-1]/legume_caribu.lsystem.tag_loop_inputs[15]
+            
+            histo_restrans_caribu.append(legume_caribu.res_trans.copy())
+            histo_restrans_default.append(legume_default.res_trans.copy())
 
             legume_default.run()
             legume_caribu.run()
@@ -140,10 +148,14 @@ def simulation(in_folder, out_folder, id_usm, write_geo=False):
         filepath = os.path.join(os.path.normpath(out_folder), "passive", "legume", "brut", filename)
         pandas.DataFrame(light_data).to_csv(filepath)
 
+        #write restrans results to npy file
+        np.save(os.path.join(os.path.normpath(out_folder),"historique_restrans_default.npy"), np.array(histo_restrans_default))
+        np.save(os.path.join(os.path.normpath(out_folder),"historique_restrans_caribu.npy"), np.array(histo_restrans_caribu))
+
 
 if __name__ == "__main__":
     in_folder = "inputs_soil_legume"
-    out_folder = "outputs/legume_CvR_gaetan"
+    out_folder = "outputs/legume_CvR"
     write_geo = True
 
     simulation(in_folder, out_folder, 1711, write_geo)
