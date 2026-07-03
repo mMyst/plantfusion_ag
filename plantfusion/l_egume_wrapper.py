@@ -883,9 +883,9 @@ class L_egume_wrapper(object):
                 sensors_specy_id = 0
             sensors = sensors_outputs[sensors_outputs.VegetationType==sensors_specy_id]
             ID_capt = 0
-            for ix in range(m_lais.shape[3]):
+            for iz in range(m_lais.shape[1] - nb0):
                 for iy in range(m_lais.shape[2]):
-                    for iz in range(m_lais.shape[1] - nb0):
+                   for ix in range(m_lais.shape[3]):
                         a = min(sensors.iloc[ID_capt]["PAR"], 1.0)
                         res_trans[((m_lais.shape[1] - 1)) - iz][iy][ix] = a
                         ID_capt += 1
