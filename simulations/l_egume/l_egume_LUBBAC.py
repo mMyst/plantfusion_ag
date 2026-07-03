@@ -139,7 +139,7 @@ def simulation(in_folder, onglet, config_file, out_folder, id_usm, write_geo=Fal
 
 if __name__ == "__main__":
     in_folder = "inputs_soil_legume"
-    out_folder = "outputs/legume_LUBBAC_brake05"
+    out_folder = "outputs/legume_LUBBAC_allfixed"
     config_file = 'liste_usms_couplage.xls'
     onglet='LUBBAC' #repiquage le 30/09, départ de la sim
     id_usm=12 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale, all with perfect irrigation

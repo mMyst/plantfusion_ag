@@ -15,7 +15,7 @@ def simulation(
     start_wheat, simulation_length, id_usm, 
     run_postprocessing=False, run_graphs=False, writegeo=False, geostep=1,
     wheatroot_type='profile',min_depth=None,
-    coef_delay_til = 2.0, coef_buffer_til = 0.5, gaic = 0.16
+    coef_delay_til = 2.0, coef_buffer_til = 0.5, gaic = 0.11
 ):
     try:
         # Create target Directory
@@ -192,5 +192,5 @@ if __name__ == "__main__":
     simulation(in_folder_legume, in_folder_wheat, out_folder, 
                start_wheat, simulation_length, id_usm, min_depth=0.01,
                writegeo=writegeo, geostep=geostep, 
-                coef_delay_til = 2.0, coef_buffer_til = 0.5, gaic = 0.16,
+                coef_delay_til = 2.0, coef_buffer_til = 0.5, gaic = 0.11,
                run_postprocessing=run_postprocessing, run_graphs=run_graphs)

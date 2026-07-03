@@ -1,10 +1,6 @@
 plant,axis,status,nb_leaves,GA,SAM_height,SAM_temperature,delta_teq,delta_teq_roots,teq_since_primordium,sum_TT,cohort,mstruct
 1,MS,vegetative,3,False,0,20,3600,3600,490000,0,1,0.00014623
-1,T1,vegetative,7,False,0,20,3600,3600,0,0,4,NA
-1,T2,vegetative,6,False,0,20,3600,3600,0,0,5,NA
-1,T3,vegetative,5,False,0,20,3600,3600,0,0,6,NA
-1,T4,vegetative,4,False,0,20,3600,3600,0,0,7,NA
-1,T5,vegetative,3,False,0,20,3600,3600,0,0,8,NA
-1,T6,vegetative,2,False,0,20,3600,3600,0,0,9,NA
-1,T7,vegetative,1,False,0,20,3600,3600,0,0,10,NA
-1,T8,vegetative,1,False,0,20,3600,3600,0,0,11,NA
+1,T1,None,7,False,0,20,3600,3600,0,0,4,NA
+1,T2,None,6,False,0,20,3600,3600,0,0,5,NA
+1,T3,None,5,False,0,20,3600,3600,0,0,6,NA
+1,T4,None,4,False,0,20,3600,3600,0,0,7,NA

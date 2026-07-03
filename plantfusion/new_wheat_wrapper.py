@@ -199,7 +199,7 @@ class Wheat_wrapper(object):
         rootdistribtype = "homogeneous",
         coef_delay_til = 2.0,
         coef_buffer_til = 0.5,
-        gaic = 0.16
+        gaic = 0.11
     ) -> None:
         """Constructor, 
     
@@ -957,9 +957,7 @@ class Wheat_wrapper(object):
                 ):
                     # run ElongWheat
                     Tair, Tsoil = self.meteo.loc[t_elongwheat, ["air_temperature", "soil_temperature"]]
-                    self.elongwheat_facade_.run(Tair, Tsoil, option_static=self.option_static)
 
-                    
                     self.tillers_replications = elongwheat_tillering.update_tiller_replications(
                         g=self.g,
                         adel_wheat=self.adel_wheat,
@@ -969,8 +967,11 @@ class Wheat_wrapper(object):
                         coef_delay_til=self.COEF_DELAY_TIL,
                         coef_buffer_til=self.COEF_BUFFER_TIL,
                         GAIp = self.GAIp
-                    )       
-                                                
+                    )   
+
+                    self.elongwheat_facade_.run(Tair, Tsoil, option_static=self.option_static, tillers_replications=self.tillers_replications)
+
+                                      
                     # update geometry
                     self.adel_wheat.update_geometry(self.g)
 
