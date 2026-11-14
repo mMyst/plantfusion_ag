@@ -10,8 +10,8 @@ import pandas
 import math
 import statsmodels.api as sm
 
-from alinea.adel.adel_dynamic import AdelDyn
-from alinea.adel.echap_leaf import echap_leaves
+from openalea.adel.adel_dynamic import AdelDyn
+from openalea.adel.echap_leaf import echap_leaves
 
 from lightvegemanager.stems import extract_stems_from_MTG
 
@@ -369,7 +369,7 @@ class Wheat_wrapper(object):
 
         # read adelwheat inputs at t0
         self.adel_wheat = AdelDyn(seed=1, scene_unit="m", leaves=echap_leaves(xy_model="Soissons_byleafclass"))
-        self.g = self.adel_wheat.load(dir=in_folder)
+        self.g = self.adel_wheat.load(directory=in_folder)
 
         # ---------------------------------------------
         # ----- CONFIGURATION OF THE wrapperS -------
@@ -583,6 +583,16 @@ class Wheat_wrapper(object):
 
         # -- CNWHEAT --
         # Initial states
+        cnwheat_axes_initial_state = self.inputs_dataframes[AXES_INITIAL_STATE_FILENAME][
+            [
+                i
+                for i in cnwheat_facade.cnwheat_converter.ORGANS_VARIABLES
+                if i in self.inputs_dataframes[AXES_INITIAL_STATE_FILENAME].columns
+            ]
+        ].copy()
+
+
+        
         cnwheat_organs_initial_state = self.inputs_dataframes[ORGANS_INITIAL_STATE_FILENAME][
             [
                 i
@@ -630,6 +640,7 @@ class Wheat_wrapper(object):
             CNWHEAT_TIMESTEP * self.HOUR_TO_SECOND_CONVERSION_FACTOR,
             self.plant_density,
             update_parameters_cnwheat,
+            cnwheat_axes_initial_state,
             cnwheat_organs_initial_state,
             cnwheat_hiddenzones_initial_state,
             cnwheat_elements_initial_state,

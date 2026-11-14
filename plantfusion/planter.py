@@ -419,7 +419,7 @@ class Planter:
         
         # runs an iteration of Agronomic stand to get its soil domain
         if self.indexer.wheat_active:
-            from alinea.adel.Stand import AgronomicStand
+            from openalea.adel.Stand import AgronomicStand
             
             self.type_domain = "create_heterogeneous_canopy"
             self.wheat_positions = [[] for i in range(len(self.indexer.wheat_names))]

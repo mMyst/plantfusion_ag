@@ -133,10 +133,10 @@ def simulation(in_folder, out_folder,
 
 if __name__ == "__main__":
     in_folder = "inputs_fspmwheat"
-    rootdistribtype = "profile" #"bound" or "homogeneous" or "profile"
+    rootdistribtype = "homogeneous" #"bound" or "homogeneous" or "profile"
     min_depth  = 0.2 #m 
     #out_folder = "outputs/cnwheat_soil3ds/"+rootdistribtype+"/"+str(min_depth)+"m"
-    out_folder = "outputs/cnwheat_soil3ds/"+rootdistribtype+"/302010_N"
+    out_folder = "outputs/cnwheat_soil3ds/"+rootdistribtype+"/ferti_ok"
     start_wheat = None  #commence le 17/12/1998 dans CN wheat normal (351 DOY)
     simulation_length = 2500 #2500
     write_geo = True

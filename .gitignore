@@ -1,5 +1,7 @@
 *.pyc
 *.pyf
+*.png
+*.pdf
 *.so
 *.mod0
 outputs
