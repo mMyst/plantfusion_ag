@@ -76,6 +76,7 @@ class Light_wrapper(object):
         writegeo=False,
         geostep=1,
         out_folder="",
+        compute_sensors = False,
     ):
         """Constructor, create an instance of LightVegeManager
 
@@ -84,7 +85,7 @@ class Light_wrapper(object):
         self.indexer = indexer
         self.writegeo = writegeo
         self.geostep = geostep
-        self.compute_sensors = False
+        self.compute_sensors = compute_sensors
         self.direct=direct
         if writegeo:
             create_child_folder(os.path.normpath(out_folder), "light")
@@ -256,7 +257,8 @@ class Light_wrapper(object):
             
             self.i_vtk += 1
             self.vtk_label = self.i_vtk*100000 +int(day) * 100 + int(hour)
-            
+
+            printvoxels = False
             if self.lightmodel == "ratp":
                 printvoxels = True
             elif self.lightmodel == "caribu":

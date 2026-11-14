@@ -1,6 +1,6 @@
 """
 
-    contains Planter class
+    contains Planter class and external pattern generation functions
 
 """
 
@@ -13,6 +13,160 @@ import random
 
 from plantfusion.indexer import Indexer
 
+
+######################################################
+### EXTERNAL PATTERN GENERATION UTILITY FUNCTIONS  ###
+######################################################
+
+def row_pattern(densities, n_rows, inter_rows, global_order, offset=None, noise=None):
+    # Créer un dictionnaire pour stocker les grilles de coordonnées de chaque catégorie de points
+    grids = {}
+
+    # Calculer la largeur du domaine en fonction de l'espacement entre les colonnes le plus élevé et du nombre de colonnes le plus élevé
+    # Calculer la largeur totale pour chaque catégorie
+    tot_width = {}
+    for name in n_rows.keys():
+        tot_width[name] = n_rows[name] * inter_rows[name] + (offset[name] if offset is not None and name in offset else inter_rows[name]/2)
+
+    # Trouver la catégorie ayant la plus grande largeur totale
+    max_cat = max(tot_width.items(), key=lambda x: x[1])[0]
+
+    max_inter_row = inter_rows[max_cat]
+    max_n_rows = n_rows[max_cat]
+    common_offset= offset if offset is not None else max_inter_row/(2 * len(global_order) )
+    # ^ TEMPORAiRE : suppose que IR est le même pour toutes les cultures et que le nombre de rang est le même pour toutes les cultures
+    width = (max_n_rows * max_inter_row)
+    # Calculer les coordonnées min et max du domaine carré
+    x_min, y_min = 0, 0
+    x_max, y_max = width, width
+
+    # Parcourir les catégories de points
+    #pour offset automatique si on ne précise pas : le but est de décaller d'1 inter_rang à chaque nouvelle culture 
+    rank=0 #va de 0 à nbr de cultures
+    
+    for name, density in densities.items():
+
+        # Calculer le nombre de plantes dans le domaine en fonction de la densité
+        num_plants = max(int(width**2*density),1)
+        plant_spacing = width/(num_plants/n_rows[name])
+
+        # Créer une grille de coordonnées pour la catégorie de points actuelle
+        grid = []
+        for ix in range(n_rows[name]):
+            for iy in range(int(num_plants/n_rows[name])):
+                x =  ix * inter_rows[name] + (offset[name] if offset is not None and name in offset else common_offset+2*common_offset*rank)
+                y =  plant_spacing*(iy+0.5)
+
+                if noise is not None : 
+                    (x,y)=(
+                        random.uniform(x-noise[name],x+noise[name]),
+                        random.uniform(y-noise[name],y+noise[name])
+                    )
+                grid.append((x,y,0))
+            
+        rank+=1    #permet de décaler la position des rangs de rank inter-rang (à faire évoluer)
+            
+        # Stocker la grille de coordonnées dans le dictionnaire
+        grids[name] = grid
+
+    #save domain and grid within planter
+    domain = ((x_min, y_min), (x_max, y_max))
+    coord_grid = grids
+
+    return (domain, coord_grid)
+
+
+def grid_pattern(n_cols= 20, n_rows= 20, cell_size = 0.05, col_pattern = ("wheat","empty","wheat"), noise=None):
+    # Créer un dictionnaire pour stocker les grilles de coordonnées de chaque catégorie de points
+    grids = {}
+
+    length = n_cols*cell_size
+    width = n_rows*cell_size 
+    # Calculer les coordonnées min et max du domaine 
+    x_min, y_min = 0, 0
+    x_max, y_max = length, width
+
+    grids = {name: [] for name in col_pattern}
+    
+    for col_id in range(n_cols):
+            grid_col = []
+            x =  cell_size/2 + col_id*cell_size
+            for row_id in range(n_rows):
+                y =  cell_size/2 + row_id*cell_size
+                if noise is not None : 
+                    (x,y)=(
+                        random.uniform(x-noise[name],x+noise[name]),
+                        random.uniform(y-noise[name],y+noise[name])
+                    )
+                grid_col.append((x,y,0))
+
+            modulo =col_id%len(col_pattern)
+            name = col_pattern[modulo] 
+
+            # Stocker la grille de coordonnées dans le dictionnaire
+            grids[name].extend(grid_col)            
+        
+    #save domain and grid within planter
+    domain = ((x_min, y_min), (x_max, y_max))
+    coord_grid = grids
+
+    return (domain, coord_grid)
+
+
+def grid_pattern_per_cell(n_cols=20, n_rows=20, cell_size=0.05, col_pattern=("wheat", "empty", "wheat"), noise=None):
+    # Calculer les coordonnées min et max du domaine 
+    length = n_cols * cell_size
+    width = n_rows * cell_size 
+    x_min, y_min = 0, 0
+    x_max, y_max = length, width
+
+    # Dictionnaire final qui contiendra { "wheat_0": [(x,y,0)], "wheat_1": [(x,y,0)], ... }
+    grids = {}
+    
+    # Dictionnaire pour garder un compte unique de chaque type de case (ex: wheat: 0, empty: 0)
+    instance_counters = {name: 0 for name in set(col_pattern)}
+
+    for col_id in range(n_cols):
+        # Déterminer le nom de base de la colonne (ex: "wheat" ou "empty")
+        modulo = col_id % len(col_pattern)
+        base_name = col_pattern[modulo] 
+        
+        # Position x de base pour cette colonne
+        x_base = cell_size/2 + col_id * cell_size
+
+        for row_id in range(n_rows):
+            # Position y de base pour cette ligne
+            y_base = cell_size/2 + row_id * cell_size
+            
+            # Appliquer le bruit s'il y en a, en utilisant le nom de base
+            if noise is not None and base_name in noise: 
+                x = random.uniform(x_base - noise[base_name], x_base + noise[base_name])
+                y = random.uniform(y_base - noise[base_name], y_base + noise[base_name])
+            else:
+                x = x_base
+                y = y_base
+
+            # Créer un identifiant unique pour cette cellule précise
+            # Résultat : "wheat_0", "wheat_1", "empty_0"...
+            instance_name = f"{base_name}_{instance_counters[base_name]}"
+            
+            # Stocker la coordonnée sous forme de liste d'un seul élément
+            # (pour rester compatible avec le format originel attendu par les wrappers)
+            grids[instance_name] = [(x, y, 0)]
+            
+            # Incrémenter le compteur pour la prochaine plante de ce type
+            instance_counters[base_name] += 1
+
+    # Sauvegarder le domaine et la grille (comportement d'origine)
+    domain = ((x_min, y_min), (x_max, y_max))
+    coord_grid = grids
+
+    return (domain, coord_grid)
+
+
+#######################
+### PLANTER CLASS   ###
+#######################
 
 class Planter:
     """Tool for handling the following in the simulation:
@@ -30,11 +184,13 @@ class Planter:
         * "random": generates each plant in random positions in a squared soil
 
         * "row": generates two rows for each plant specy in a squared soil
+        
+        * "forced": uses a user-provided pre-calculated positions grid
 
     Parameters
     ----------
     generation_type : str, optional
-        choose between "default", "random" or "row", by default "default"
+        choose between "default", "random", "row" or "forced", by default "default"
     indexer : Indexer, optional
         indexer for listing FSPM in the simulation, by default Indexer()
     legume_cote : dict, optional
@@ -57,6 +213,8 @@ class Planter:
         avoid to regenerate wheat positions at each timestep, by default False
     seed : int, optional
         seed for random and numpy, by default None
+    positions_grid : dict, optional
+        Dictionary mapping fspm instances to their 3D coordinates. Required if generation_type="forced"
 
     """    
     def __init__(
@@ -74,10 +232,7 @@ class Planter:
         save_wheat_positions=False,
         seed=None,
         positions_grid={},
-        n_rows=None, 
-        n_cols=None, 
-        cell_size=None, 
-        col_pattern=None
+        domain = None
     ) -> None:
         """Constructor, computes a global soil domain for the simulation
 
@@ -89,7 +244,7 @@ class Planter:
         self.positions_grid = positions_grid
         self.indexer = indexer
         self.number_of_plants: list = [0 for i in indexer.global_order]
-        self.domain=None
+        self.domain=domain
 
         # les lsystem l-egume sont par défaut en cm et le reste en m
         self.transformations: dict = {"scenes unit": {}}
@@ -116,19 +271,6 @@ class Planter:
         elif generation_type == "forced":
             self.__forced(positions_grid)
             self.type_domain = "mix"
-
-        elif generation_type == 'row_forced':
-            self.domain, positions_grid=self.row_pattern(plant_density, n_rows, inter_rows)
-            self.__forced(positions_grid)
-            self.type_domain = 'mix'
-
-        elif generation_type == 'grid_forced':
-            self.domain, positions_grid=self.grid_pattern(n_cols, n_rows, cell_size, col_pattern , noise=None) #n_cols, n_rows, cell_size, pattern , noise=None
-            self.__forced(positions_grid)
-            self.type_domain = 'mix'
-
-        
-
 
 
     def __random(self, plant_density, xy_square_length):
@@ -238,15 +380,15 @@ class Planter:
         self.plant_density = {}
 
         #set the size of the domain
-        if self.domain is None :
+        if self.domain is None : #TODO this isn't robust, fix method or provide domain when using forced
 
             x_coords=[x for sublist in positions_grid.values() for x, y, z in sublist]
             y_coords=[y for sublist in positions_grid.values() for x, y, z in sublist]
 
-            step_x = round((numpy.unique(x_coords)[1]-numpy.unique(x_coords)[0]),1)
-            step_y = round((numpy.unique(y_coords)[1]-numpy.unique(y_coords)[0]),1)
+            step_x = min(x_coords)
+            step_y = min(y_coords)
 
-            self.domain = ((0.0, 0.0), (max(x_coords)+step_x/2, max(y_coords)+step_y/2))
+            self.domain = ((0.0, 0.0), (max(x_coords)+step_x, max(y_coords)+step_y))
 
 
 
@@ -278,113 +420,6 @@ class Planter:
         self.legume_cote = (self.domain[1][0]-self.domain[0][0]) *100 #in cm
         self.legume_optdamier = 8
 
-        
-    def row_pattern(self, densities, n_rows, inter_rows, offset=None, noise=None):
-        # Créer un dictionnaire pour stocker les grilles de coordonnées de chaque catégorie de points
-        grids = {}
-
-
-        # Calculer la largeur du domaine en fonction de l'espacement entre les colonnes le plus élevé et du nombre de colonnes le plus élevé
-        # Calculer la largeur totale pour chaque catégorie
-        tot_width = {}
-        for name in n_rows.keys():
-            tot_width[name] = n_rows[name] * inter_rows[name] + (offset[name] if offset is not None and name in offset else inter_rows[name]/2)
-
-        # Trouver la catégorie ayant la plus grande largeur totale
-        max_cat = max(tot_width.items(), key=lambda x: x[1])[0]
-
-
-        max_inter_row = inter_rows[max_cat]
-        max_n_rows = n_rows[max_cat]
-        common_offset= offset if offset is not None else max_inter_row/(2 * len(self.indexer.global_order) )
-        # ^ TEMPORAiRE : suppose que IR est le même pour toutes les cultures et que le nombre de rang est le même pour toutes les cultures
-        width = (max_n_rows * max_inter_row)
-        # Calculer les coordonnées min et max du domaine carré
-        x_min, y_min = 0, 0
-        x_max, y_max = width, width
-
-        # Parcourir les catégories de points
-        #pour offset automatique si on ne précise pas : le but est de décaller d'1 inter_rang à chaque nouvelle culture 
-        rank=0 #va de 0 à nbr de cultures
-        
-        for name, density in densities.items():
-
-            # Calculer le nombre de plantes dans le domaine en fonction de la densité
-            num_plants = max(int(width**2*density),1)
-            plant_spacing = width/(num_plants/n_rows[name])
-
-
-
-            # Créer une grille de coordonnées pour la catégorie de points actuelle
-            grid = []
-            for ix in range(n_rows[name]):
-                for iy in range(int(num_plants/n_rows[name])):
-                    x =  ix * inter_rows[name] + (offset[name] if offset is not None and name in offset else common_offset+2*common_offset*rank)
-                    y =  plant_spacing*(iy+0.5)
-
-                    if noise is not None : 
-                        (x,y)=(
-                            random.uniform(x-noise[name],x+noise[name]),
-                            random.uniform(y-noise[name],y+noise[name])
-                        )
-                    grid.append((x,y,0))
-                
-            
-            rank+=1    #permet de décaler la position des rangs de rank inter-rang (à faire évoluer)
-                
-
-            # Stocker la grille de coordonnées dans le dictionnaire
-            grids[name] = grid
-
-        #save domain and grid within planter
-        domain = ((x_min, y_min), (x_max, y_max))
-        coord_grid = grids
-
-        return (domain, coord_grid)
-        
-
-
-    def grid_pattern(self, n_cols= 20, n_rows= 20, cell_size = 0.05, col_pattern = ("wheat","empty","wheat"), noise=None):
-        # Créer un dictionnaire pour stocker les grilles de coordonnées de chaque catégorie de points
-        grids = {}
-
-        length = n_cols*cell_size
-        width = n_rows*cell_size 
-        # Calculer les coordonnées min et max du domaine 
-        x_min, y_min = 0, 0
-        x_max, y_max = length, width
-
-        grids = {name: [] for name in col_pattern}
-        
-
-        for col_id in range(n_cols):
-                grid_col = []
-                x =  cell_size/2 + col_id*cell_size
-                for row_id in range(n_rows):
-                    y =  cell_size/2 + row_id*cell_size
-                    if noise is not None : 
-                        (x,y)=(
-                            random.uniform(x-noise[name],x+noise[name]),
-                            random.uniform(y-noise[name],y+noise[name])
-                        )
-                    grid_col.append((x,y,0))
-
-                modulo =col_id%len(col_pattern)
-                name = col_pattern[modulo] 
-
-                # Stocker la grille de coordonnées dans le dictionnaire
-                grids[name].extend(grid_col)            
-            
-               
-
-            
-
-        #save domain and grid within planter
-        domain = ((x_min, y_min), (x_max, y_max))
-        coord_grid = grids
-
-        return (domain, coord_grid)
-        
 
     def __default_preconfigured(
         self, legume_cote={}, inter_rows=0.15, plant_density={1: 250}, xy_plane=None, translate=None, seed=None
@@ -422,7 +457,7 @@ class Planter:
         
         # runs an iteration of Agronomic stand to get its soil domain
         if self.indexer.wheat_active:
-            from alinea.adel.Stand import AgronomicStand
+            from openalea.adel.Stand import AgronomicStand
             
             self.type_domain = "create_heterogeneous_canopy"
             self.wheat_positions = [[] for i in range(len(self.indexer.wheat_names))]
@@ -780,10 +815,6 @@ class Planter:
         return generated_scene
 
 
-
-
-
-
     def create_heterogeneous_canopy(
         self,
         geometrical_model,
@@ -825,7 +856,7 @@ class Planter:
             list of plant positions (x, y, z)
         """        
 
-        from alinea.adel.Stand import AgronomicStand
+        from openalea.adel.Stand import AgronomicStand
         
         if seed is not None:
             random.seed(seed)
@@ -927,9 +958,12 @@ class Planter:
             alea = alea.drop("tmp", axis=1)
             for vid in elements_vid_list:
                 numpy.random.seed(vid)
+                alea["azimut_leaf"] = alea["azimut_leaf"].astype(float)
                 alea.loc[alea["vid"] == vid, "azimut_leaf"] = numpy.random.uniform(
                     -var_leaf_azimut, var_leaf_azimut, size=len(positions)
                 )
+
+                alea["inclination_leaf"] = alea["inclination_leaf"].astype(float)
                 alea.loc[alea["vid"] == vid, "inclination_leaf"] = numpy.random.uniform(
                     -var_leaf_inclination, var_leaf_inclination, size=len(positions)
                 )

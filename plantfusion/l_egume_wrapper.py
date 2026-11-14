@@ -945,6 +945,49 @@ class L_egume_wrapper(object):
     
         self.lsystem.axiom = a
 
+    def get_canopy_height(self, percentage=10):
+        """
+        Calculates the average of the top X% highest plant heights using NumPy.
+        :param percentage: The percentage of the tallest plants to select (default is 10).
+
+        Note : you can also use get_top_triangles_height() from utils.py to calculate height from the pgl scene 
+        """
+        # Convert the list to a NumPy array
+        heights_array = numpy.array(self.lsystem.invar['Hplante'])
+        
+        # Safety check if the array is empty
+        if heights_array.size == 0:
+            return 0.0
+            
+        # Find the threshold value that delimits the top X% (e.g., 90th percentile for top 10%)
+        threshold = numpy.percentile(heights_array, 100 - percentage)
+        
+        # Filter heights greater than or equal to this threshold using boolean indexing
+        top_heights = heights_array[heights_array >= threshold]
+        
+        # Calculate and return the average
+        return float(numpy.mean(top_heights))
+
+    def schedule_a_cut(self, hcut=5.0):
+        """
+        Schedules a cut for the following day (DOY + 1).
+        :param hcut: Height of the cut in cm (default is 5.0)
+        """
+        # 1. Get the current DOY
+        current_doy = self.lsystem.meteo_j['DOY']
+        
+        # 2. Get the management data dictionary
+        mgmt_data = self.lsystem.mng
+        
+        # 3. Convert to Pandas DataFrame
+        df = pandas.DataFrame(mgmt_data)
+        
+        # 4. Schedule the cut for DOY + 1
+        df.loc[df['DOY'] == current_doy + 1, ['Coupe', 'Hcut']] = [1.0, hcut]
+        
+        # 5. Convert back to dictionary of lists and overwrite the original
+        self.lsystem.mng = df.to_dict('list')
+
 def passive_lighting(data, energy, DOY, scene, legume_wrapper, lighting_wrapper):
     """Run the lighting computation step without saving
 
