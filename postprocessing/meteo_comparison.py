@@ -105,6 +105,7 @@ if __name__ == "__main__":
     legume_meteo_files = {
         'legume_lusignan': os.path.join('inputs_soil_legume', 'meteo_exemple.xls'),
         'LUBBAC': os.path.join('inputs_soil_legume', 'LUBBAC_D_24_25.xls'),
+        'LUBBAC_capteurs' : os.path.join('inputs_soil_legume', 'LUBBAC_D_24_25_capteurs.xls')
 
         # Add other paths as needed
     }

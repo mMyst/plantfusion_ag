@@ -3,19 +3,29 @@ import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 
-delta_t_simuls = 0 #1509
-meteo_data = pd.read_csv(os.path.join('inputs_fspmwheat', 'meteo_Ljutovac2002.csv'), index_col='t')
+delta_t_simuls = 0  #1872 #1509
+# meteo_data = pd.read_csv(os.path.join('inputs_fspmwheat', 'LUBBAC_H_24_25_capteurs.csv'), index_col='t')
+meteo_data = pd.read_csv(os.path.join('inputs_fspmwheat', 'cnwheat_2500\meteo_Ljutovac2002.csv'), index_col='t')
 meteo_data['Date'] = pd.to_datetime(meteo_data['Date'], format='%d/%m/%Y')
 
 
 def add_date_axis(ax, meteo_data):
     """Helper function to add the secondary Date x-axis."""
     ax2 = ax.twiny()
-    ax2.set_xticks(ax.get_xticks())
-    # Ensure ticks exist in meteo_data to prevent KeyError
-    valid_ticks = [t for t in ax.get_xticks() if t in meteo_data.index]
+    
+    # 1. Synchronize the limits to perfectly align with the main axis
+    ax2.set_xlim(ax.get_xlim())
+    
+    # 2. Get ticks and filter those present in meteo_data
+    main_ticks = ax.get_xticks()
+    valid_ticks = [t for t in main_ticks if t in meteo_data.index]
+    
+    # 3. Apply only the valid ticks and their corresponding labels to ax2
+    ax2.set_xticks(valid_ticks)
     if valid_ticks:
         ax2.set_xticklabels(meteo_data.loc[valid_ticks]['Date'].dt.strftime('%d/%m'))
+        
+    # 4. Position it at the bottom
     ax2.xaxis.set_ticks_position('bottom')
     ax2.xaxis.set_label_position('bottom')
     ax2.spines['bottom'].set_position(('outward', 35))
@@ -372,7 +382,7 @@ def leaf_length_mstruct_area(dict_current_hz, df_control_hz, dict_current_elemen
 
         # 4. Mstruct hz
         if phyto_id in (1, 2):
-            axs[1][0].plot(df_control_elements[(df_control_elements.metamer == phyto_id)]['t'].unique(),
+            axs[1][0].plot(df_control_elements[(df_control_elements.metamer == phyto_id) & (df_control_elements.element == 'LeafElement1')]['t'].unique(),
                           df_control_elements[(df_control_elements.metamer == phyto_id) & (df_control_elements.element == 'LeafElement1')]
                           .groupby(['t'])['mstruct'].sum(),
                           label='Control', color='black', linestyle='--')
@@ -463,24 +473,24 @@ def leaf_length_mstruct_area(dict_current_hz, df_control_hz, dict_current_elemen
         plt.close()
 
 
-def leaf_emergence(dict_current_hz, df_control_hz, pdf):
+def leaf_emergence(dict_current_hz, df_control_hz, pdf, delta_t= 0):
     dict_all_emergence = {}
 
     # Gather Control Emergence
     t_emergence_marion = {}
     for phyto_id in df_control_hz['metamer'].unique():
-        if phyto_id == 3 or not df_control_hz[(df_control_hz.metamer == phyto_id)]['leaf_is_emerged'].any():
+        if phyto_id == 0 or not df_control_hz[(df_control_hz.metamer == phyto_id)]['leaf_is_emerged'].any():
             continue
-        t_emergence_marion[phyto_id] = df_control_hz[(df_control_hz.metamer == phyto_id) & (df_control_hz.leaf_is_emerged == True)]['t'].iloc[0]
+        t_emergence_marion[phyto_id] = df_control_hz[(df_control_hz.metamer == phyto_id) & (df_control_hz.leaf_is_emerged == True)]['t'].iloc[0]-delta_t
     dict_all_emergence['Control'] = t_emergence_marion
 
     # Gather Current Simulations Emergence
     for name, df in dict_current_hz.items():
         t_emergence = {}
         for phyto_id in df['metamer'].unique():
-            if not df[(df.metamer == phyto_id)]['leaf_is_emerged'].any():
+            if phyto_id == 0 or not df[(df.metamer == phyto_id)]['leaf_is_emerged'].any():
                 continue
-            t_emergence[phyto_id] = df[(df.metamer == phyto_id) & (df.leaf_is_emerged == True)]['t'].iloc[0]
+            t_emergence[phyto_id] = df[(df.metamer == phyto_id) & (df.leaf_is_emerged == True)]['t'].iloc[0]-delta_t
         dict_all_emergence[name] = t_emergence
 
     # Plot as a grouped bar chart
@@ -490,9 +500,13 @@ def leaf_emergence(dict_current_hz, df_control_hz, pdf):
     axis.set_ylabel('Temps emergence (hour)')
 
     ax2 = axis.twinx()
-    ax2.set_yticks(axis.get_yticks())
+    
+    # Synchronize limits here as well!
+    ax2.set_ylim(axis.get_ylim()) 
     
     valid_ticks = [t for t in axis.get_yticks() if t in meteo_data.index]
+    
+    ax2.set_yticks(valid_ticks)
     if valid_ticks:
         ax2.set_yticklabels(meteo_data.loc[valid_ticks]['Date'].dt.strftime('%d/%m'))
         
@@ -513,7 +527,7 @@ def plastochrone(dict_current_axes, df_control_axes, pdf):
     for name, df in dict_current_axes.items():
         axis.plot(df['t'], df['nb_leaves'], label=name)
 
-    axis.set_xlabel('Time (day)')
+    axis.set_xlabel('Time (t)')
     axis.set_ylabel('Number of leaves on MS')
     axis.legend()
 
@@ -526,49 +540,89 @@ if __name__ == '__main__':
     # 1. Define your dictionary of simulation paths
 
     simulations_paths = {
-        # 'Sim_Default': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_temp\wheat',
-        
-        # 'Sim_Tillers_0': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\0til\wheat',
-        # 'Sim_Tillers_1': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\1til\wheat',
-        # 'Sim_Tillers_2': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\2til\wheat',
-        # 'Sim_Tillers_3': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\3til\wheat'
-        # Add as many as needed here...
+        # 'Default_bis': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_temp\wheat',
+        # 'Default' : r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default\wheat',
 
-        #'Sim_Soil3DS_Bound_0.2m': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\bound\0.2m\wheat',
-        # 'Sim_Soil3DS_Profile_0.2m': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\profile\0.2m\wheat',
-        # 'Sim_Soil3DS_Debug_Homogeneous_1.5m': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds_debug\homogeneous\1.5m\wheat',
-        # 'Sim_Soil3DS_Debug_Profile_0.2m': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds_debug\profile\0.2m\wheat'
- 
-        # 'Sim_Soil3DS_Profile_0.2m_50N': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\profile\0.2m_50N\wheat',
-        # 'Sim_Soil3DS_Profile_lowN_0.2m_50N': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\profile\lowN\0.2m_50N\wheat',
         
-        # 'Sim_lowN_0til_0N': r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\lowN_monoculm\0.2m_0N\wheat',
-        # 'Sim_lowN_4til_0N': r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\lowN\0.2m_0N\wheat',
-        # 'Sim_lowN_0til_450N': r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\lowN_monoculm\0.2m_450N\wheat',
-        # 'Sim_lowN_4til_450N': r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\lowN\0.2m_450N\wheat'
+        # 'Tillers_0': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\0til\wheat',
+        # 'Tillers_1': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\1til\wheat',
+        # 'Tillers_2': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\2til\wheat',
+        # 'Tillers_3': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_tillers\3til\wheat'
 
-        'Sim_LUBBAC_wheat' : r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\wheat_LUBBAC\wheat',
-        'Sim_default_meteo_LUBBAC' : r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_meteo_LUBBAC\wheat'
+        # 'Soil3DS_Bound_0.2m': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\bound\0.2m\wheat',
+        # 'Soil3DS_Homogeneous_1.5m': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds_debug\homogeneous\1.5m\wheat',
+        # 'Soil3DS_Profile_0.2m': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds_debug\profile\0.2m\wheat',
+        # 'Soil3DS_Profile_0.2m_gradient': r'C:\Users\agrumel\Documents\Data\Sorties CNWheat\soil3ds_302010_N/wheat',
+
+        'Homogeneous': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds_debug\homogeneous\1.5m\wheat',
+        'Profile': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds_debug\profile\0.2m\wheat',
+        'Profile_Ngradient': r'C:\Users\agrumel\Documents\Data\Sorties CNWheat\soil3ds_302010_N\wheat',
+
+
+        # 'Soil3DS_Profile_0.2m_50N': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\profile\0.2m_50N\wheat',
+        # 'Soil3DS_Profile_lowN_0.2m_50N': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_soil3ds\profile\lowN\0.2m_50N\wheat',
+        
+        # 'lowN_0til_0N': r'C:\Users\agrumel\Documents\Data\Sorties CNWheat\lowN_monoculm\0.2m_0N\wheat',
+        # 'lowN_4til_0N': r'C:\Users\agrumel\Documents\Data\Sorties CNWheat\lowN\0.2m_0N\wheat',
+        # 'lowN_0til_450N': r'C:\Users\agrumel\Documents\Data\Sorties CNWheat\lowN_monoculm\0.2m_450N\wheat',
+        # 'lowN_4til_450N': r'C:\Users\agrumel\Documents\Data\Sorties CNWheat\lowN\0.2m_450N\wheat'
+
+        # 'LUBBAC_wheat' : r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\wheat_LUBBAC\wheat',
+        # 'default_meteo_LUBBAC' : r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default_meteo_LUBBAC\wheat',
+
+        # "WL_LUBBAC" : r"C:\Users\agrumel\Documents\Data\Simul LUBBAC\WheatLuz_LUBBAC_emergence_adel\wheat",
+        # "WLR_LUBBAC" : r"C:\Users\agrumel\Documents\Data\Simul LUBBAC\WheatLuzREG_LUBBAC_emergence_adel\wheat",
+        # "W_LUBBAC" : r"C:\Users\agrumel\Documents\Data\Simul LUBBAC\Wheat_LUBBAC_emergence_adel\wheat",
+
+        # "Wheat_LUBBAC" : r"C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\Wheat_LUBBAC_AdelZsow\wheat",
+        # 'Pure modRER': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\Wheat_LUBBAC_emergence_modRer\wheat',
+        # 'old modRER': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\Wheat_LUBBAC_emergence_oldRer\wheat',
+        # 'old modRER Asso': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\WheatLuz_LUBBAC_emergence_oldRer_Zsown\wheat',
+        # 'forcedN': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\Wheat_LUBBAC_emergence_forcedN\wheat',
+        # 'forcedN_normalRer': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\Wheat_LUBBAC_emergence_forcedN_normalRer\wheat',
+
+        # 'W_VertLeaf03': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\Wheat_LUBBAC_VertLeaf_03\wheat',
+        # 'WL_VertLeaf03': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\WheatLuz_LUBBAC_VertLeaf_03\wheat',
+        # 'WL_VertLeaf03dyn': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\WheatLuz_LUBBAC_VertLeaf_03_wiggle6\wheat',
+        # 'WL_VertLeaf03dyn_wide': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\WheatLuz_LUBBAC_VertLeaf_03_wiggle10\wheat',
+        # 'WL_VertLeaf03dyn_wider': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\WheatLuz_LUBBAC_VertLeaf_03_wiggle200\wheat',
+
+        # 'W_VertLeaf03dyn':r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\Wheat_LUBBAC_VertLeaf_03\wheat',
+        # 'W_VertLeaf03dyn_wide': r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\Wheat_LUBBAC_VertLeaf_03_10\wheat',
+        # 'W_VertLeaf03dyn_wider':r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\Wheat_LUBBAC_VertLeaf_03_200\wheat',
+
+
+
           
-
-
-
-
     }
+
+    # simulations_paths = {
+    #     f"wheat_{i}": fr"C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\WheatLuz_LUBBAC_emergence_parallel\wheat_{i}\wheat_{i}"
+    #     for i in range(12)
+    # }
+
+
+
 
     ### Path Control
     
     #Version Soumission Marion
-    #dirpath_control = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\Données Marion\Soumission_JXBot'
+    # dirpath_control = r'C:\Users\agrumel\Documents\Data\Sorties CNWheat\Données Marion\Soumission_JXBot'
 
     #Simul CNWheat Plantfusion
-    dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default\wheat'
+    # dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\cnwheat_default\wheat'
+    # dirpath_control = r'C:\Users\agrumel\Documents\Data\Sorties CNWheat\cnwheat_default_emergence\wheat'
+    
+    #Simul CNWheat Plantfusion avec meteo LUBBAC
+    # dirpath_control  = r"c:\Users\agrumel\Documents\Data\Sorties CNWheat\Tests LUBBAC Temperature\cnwheat_default_emergence_meteo_lubbac\wheat"
+    # dirpath_control = r"C:\Users\agrumel\Documents\Data\Simul LUBBAC\Wheat_LUBBAC_emergence\wheat"
+    
 
     #simul CNWheat Marion depuis mon ordi
-    #dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\WheatFspm\fspm-wheat\example\Vegetative_stages'
+    dirpath_control = r'C:\Users\agrumel\Code\Python_Ecophy\WheatFspm\fspm-wheat\example\Vegetative_stages'
 
     #Simul CNWheat OpenAlea
-    #dirpath_control = r'C:\Users\agrumel\Documents\Données\Sorties CNWheat\Vegetative_stages - V2 Marion\outputs'
+    # dirpath_control = r'C:\Users\agrumel\Documents\Data\Sorties CNWheat\Vegetative_stages - V2 Marion\outputs'
 
     
 
@@ -645,7 +699,11 @@ if __name__ == '__main__':
     tmax = dict_current_axes[first_sim_key].t.max()
 
     # 3. Plot Graphs into PDF
-    with PdfPages('Comparison_cnwheat.pdf') as pdf:
+
+    delta_t = 0
+
+    pdf_name = 'Comparison_'+'_'.join(simulations_paths.keys()) + '.pdf'
+    with PdfPages(pdf_name) as pdf:
         phloem(dict_current_organs, df_control_organs, tmin, tmax, pdf)
         photosynthesis(dict_current_axes, df_control_axes, pdf)
         roots(dict_current_organs, df_control_organs, tmin, tmax, pdf)
@@ -655,5 +713,5 @@ if __name__ == '__main__':
         height(dict_current_elements_outputs, df_control_elements_outputs, tmin, tmax, pdf)
         include_images(dict_graphs_paths, GRAPHS_CONTROL, pdf)
         leaf_length_mstruct_area(dict_current_hz_MS, df_control_hz_MS, dict_current_elements_MS, df_control_elements_MS, tmin, tmax, pdf)
-        leaf_emergence(dict_current_hz_MS, df_control_hz_MS, pdf)
+        leaf_emergence(dict_current_hz_MS, df_control_hz_MS, pdf,delta_t)
         plastochrone(dict_current_axes_outputs_MS, df_control_axes_outputs_MS, pdf)

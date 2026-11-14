@@ -4,12 +4,25 @@ from matplotlib.widgets import Slider
 import os
 
 # 1. Configuration: List your .npy files and their display names here
+# fichiers_a_comparer = {
+#     "Caribu": r"C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\legume_CvR\historique_restrans_caribu.npy",     # Example: "Display Name": "filename.npy"
+#     "Default": r"C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\legume_CvR\historique_restrans_default.npy",
+#     "bugrid" : r"C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\legume_caribu_buggrid\historique_restrans_caribu.npy"
+#     # Add as many as you want: "Experiment 3": "file3.npy",
+# }
+
 fichiers_a_comparer = {
-    "Caribu": r"C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\legume_CvR\historique_restrans_caribu.npy",     # Example: "Display Name": "filename.npy"
-    "Default": r"C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\legume_CvR\historique_restrans_default.npy",
-    "bugrid" : r"C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\legume_caribu_buggrid\historique_restrans_caribu.npy"
+    # "PureWheat": r"C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\Wheat_LUBBAC_emergence_wind_gai\historique_restrans_caribu.npy",     # Example: "Display Name": "filename.npy"
+    "WheatLuz": r"C:\Users\agrumel\Documents\Data\Simul LUBBAC\WheatLuz_LUBBAC_emergence_adel\historique_restrans_caribu.npy",
+    "WheatLuzREG": r"C:\Users\agrumel\Documents\Data\Simul LUBBAC\WheatLuzREG_LUBBAC_emergence_adel\historique_restrans_caribu.npy",
+    "Wheat": r"C:\Users\agrumel\Documents\Data\Simul LUBBAC\Wheat_LUBBAC_emergence_adel\historique_restrans_caribu.npy",
+
+    
+    # "Legume" : r"C:\Users\agrumel\Code\Python_Ecophy\plantfusion_ag\outputs\legume_LUBBAC_testparam\historique_restrans_caribu.npy"
     # Add as many as you want: "Experiment 3": "file3.npy",
 }
+
+
 
 # 2. Load and validate the data
 data_list = []
@@ -22,6 +35,24 @@ for name, filepath in fichiers_a_comparer.items():
         continue
     
     data = np.load(filepath)
+    
+    # --- NOUVEAU CODE : CONVERSION W -> W/m2 ---
+    # La tuile fait 30cm x 30cm, soit 0.09 m² au total
+    surface_tuile_m2 = 0.09 
+    
+    # On récupère les dimensions spatiales X et Y d'origine
+    X_orig, Y_orig = data.shape[-2], data.shape[-1]
+    
+    # On calcule la surface d'une seule subdivision
+    surface_case_m2 = surface_tuile_m2 / (X_orig * Y_orig)
+    
+    # Conversion : W divisé par des m² donne des W/m²
+    data = data / surface_case_m2
+    # -------------------------------------------
+    
+    # Tuilage 3x3 (9 cases) : on répète 1x pour le temps, 1x pour Z, 3x pour X, 3x pour Y
+    data = np.tile(data, (1, 1, 3, 3))
+    
     data_list.append(data)
     titles.append(name)
 
@@ -36,7 +67,7 @@ for d, name in zip(data_list, titles):
 
 T_max, Z_max, X_max, Y_max = base_shape
 N_files = len(data_list)
-print(f"Successfully loaded {N_files} files. Dimensions: {T_max} time steps, {Z_max} layers.")
+print(f"Successfully loaded {N_files} files. Dimensions: {T_max} time steps, {Z_max} layers. Spatial grid (tiled 3x3): {X_max}x{Y_max}")
 
 # 3. Calculate GLOBAL min and max for a unified color scale
 vmin = min([np.min(d) for d in data_list])
@@ -72,7 +103,8 @@ for i, ax in enumerate(axes):
     images.append(im)
 
 # Add a single colorbar shared across all subplots
-fig.colorbar(images[0], ax=axes, label="Valeur res_trans", shrink=0.8, location='right')
+fig.colorbar(images[0], ax=axes, label="Valeur res_trans (W/m²)", shrink=0.8, location='right')
+
 
 # 5. Create the slider axes [left, bottom, width, height]
 ax_t = plt.axes([0.15, 0.1, 0.7, 0.03])
