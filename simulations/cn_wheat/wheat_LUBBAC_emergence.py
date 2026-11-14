@@ -1,8 +1,11 @@
-from plantfusion.new_wheat_wrapper import Wheat_wrapper
+from plantfusion.adel_wheat_wrapper import Wheat_wrapper
 from plantfusion.light_wrapper import Light_wrapper
 from plantfusion.soil_wrapper import Soil_wrapper
 from plantfusion.indexer import Indexer
-from plantfusion.planter import Planter
+from plantfusion.planter import Planter, grid_pattern
+from elongwheat import tillering as elongwheat_tillering
+
+
 
 import time
 import datetime
@@ -32,14 +35,19 @@ def simulation(
     
     indexer = Indexer(global_order=[wheat_name], wheat_names=[wheat_name])
 
-    tillers_replications = {"T1": 0.5, "T2": 0.5, "T3": 0.5, "T4": 0.5}
- 
+    tillers_replications = {"T1": 0.5, "T2": 0.5, "T3": 0.5, "T4": 0.5, "T5": 0.5}
+
+    # ,"T5": 0.5, "T6": 0.5, "T7": 0.5
+
     sky = "turtle46"
-    RERmax_vegetative_stages_example = {
-        "elongwheat": {
-            "RERmax": {5: 3.35e-06, 6: 2.1e-06, 7: 2.0e-06, 8: 1.83e-06, 9: 1.8e-06, 10: 1.65e-06, 11: 1.56e-06}
-        }
-    }
+    # RERmax_vegetative_stages_example = {
+    #     "elongwheat": {
+    #         "RERmax": {5: 3.35e-06, 6: 2.1e-06, 7: 2.0e-06, 8: 1.83e-06, 9: 1.8e-06, 10: 1.65e-06, 11: 1.56e-06}
+    #     }
+    # }
+    RERmax_vegetative_stages_example = None
+
+    
     senescwheat_timestep = 1
     light_timestep = 4
   
@@ -55,14 +63,20 @@ def simulation(
     offset = {wheat_name: 0.15*2}
     noise = {wheat_name:0.001}
 
+    domain, full_grid = grid_pattern(
+        n_cols=n_cols, 
+        n_rows=n_rows, 
+        cell_size=cell_size, 
+        col_pattern=col_pattern, 
+        noise=None
+    )
+
     
     planter = Planter(indexer=indexer, 
-                      generation_type='grid_forced',
-                      n_rows=n_rows,
-                      n_cols= n_cols,
-                      cell_size=cell_size,
-                      col_pattern=col_pattern,
-                      save_wheat_positions=True)
+                      generation_type='forced',
+                      save_wheat_positions=True,
+                      positions_grid=full_grid,
+                      domain= domain)
 
 
     wheat = Wheat_wrapper(
@@ -78,6 +92,7 @@ def simulation(
         SENESCWHEAT_TIMESTEP=senescwheat_timestep,
         LIGHT_TIMESTEP=light_timestep,
         SOIL_PARAMETERS_FILENAME="inputs_soil_legume/Parametres_plante_exemple.xls",
+        MANAGEMENT_FILENAME="management_zsowing.csv",
         rootdistribtype=wheatroot_type,
         coef_delay_til = coef_delay_til,
         coef_buffer_til = coef_buffer_til,
@@ -114,6 +129,7 @@ def simulation(
             wheat.start_time=wheat.meteo[wheat.meteo['Date']==start_wheat].index[0]
         
         day_count = 0
+        light_run_count=0
 
         for t in range(wheat.start_time, wheat.start_time + simulation_length, wheat.SENESCWHEAT_TIMESTEP):
 
@@ -122,13 +138,22 @@ def simulation(
             if (bool(wheat.g.property('geometry')) and (((t % light_timestep == 0) and (wheat.PARi_next_hours(t) > 0)) or (wheat.doy(t) != wheat.next_day_next_hour(t)))):
                 wheat_input, stems = wheat.light_inputs(planter)
 
-                if  ((writegeo==True) and (t%geostep*light_timestep == 0 )) :
+                if  ((writegeo==True) and (light_run_count%geostep == 0 )) :
                     lighting.writegeo=True 
                 else:
                     lighting.writegeo=False
                 
 
                 lighting.run(scenes=[wheat_input], day=wheat.doy(t), hour=wheat.hour(t), parunit="micromol.m-2.s-1", stems=stems)
+                light_run_count+=1
+
+                wheat.GAIp = elongwheat_tillering.compute_local_GAIp(
+                    scene = lighting.light.to_plantGL(),
+                    radius = 0.10,
+                    target_point=(0.125, 0.125, 0.0),
+                    xy_only = True
+                    )  
+
                 
                 if ((t % light_timestep == 0) and (wheat.PARi_next_hours(t) > 0)) :
                     wheat.light_results(energy=wheat.energy(t), lighting=lighting)
@@ -176,21 +201,22 @@ def simulation(
         print(wheat.tillers_replications)
         soil.end()
         wheat.end(run_postprocessing=run_postprocessing, run_graphs=run_graphs)
+
         
 
 if __name__ == "__main__":
     in_folder_legume = "inputs_soil_legume"
     in_folder_wheat = "inputs_fspmwheat"
-    out_folder = "outputs/wheat_LUBBAC_emergence"
+    out_folder = "outputs/Wheat_LUBBAC_why"
     start_wheat='18/11/2024' #semis au 18/11/2024, 3 feuilles au 07/01/2025 d'après données. 31/12/2024 pour éviter pb doy, t init = 2904
-    simulation_length = 3370 #def is 4000. 3370 matches the max thermal age of the default CNwheat simulation
+    simulation_length = 3430 #3370 = meme cumul thermique que référence. 3430 = arrêt à la fermeture du couvert blé d'après scan eric (09/04/2025)
     id_usm = 2 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale, all with perfect irrigation => only relevant for soil parameters here
     writegeo = True
-    geostep = 1
+    geostep = 10
     run_postprocessing = True
     run_graphs = True
     simulation(in_folder_legume, in_folder_wheat, out_folder, 
                start_wheat, simulation_length, id_usm, min_depth=0.01,
                writegeo=writegeo, geostep=geostep, 
-                coef_delay_til = 2.0, coef_buffer_til = 0.5, gaic = 0.11,
+                coef_delay_til = 2.0, coef_buffer_til = 0.5, gaic = 0.07,
                run_postprocessing=run_postprocessing, run_graphs=run_graphs)

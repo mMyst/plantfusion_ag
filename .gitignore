@@ -4,6 +4,8 @@
 *.mod0
 outputs
 *.mod
+*.png
+*.pdf
 build
 dist
 .vscode

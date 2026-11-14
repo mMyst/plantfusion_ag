@@ -10,8 +10,8 @@ import pandas
 import math
 import statsmodels.api as sm
 
-from alinea.adel.adel_dynamic import AdelDyn
-from alinea.adel.echap_leaf import echap_leaves
+from openalea.adel.adel_dynamic import AdelDyn
+from openalea.adel.echap_leaf import echap_leaves
 
 from lightvegemanager.stems import extract_stems_from_MTG
 
@@ -286,7 +286,7 @@ class Wheat_wrapper(object):
             cnwheat_simulation.Simulation.ORGANS_T_INDEXES)
             
 
-    
+        self.tiller_window_history = []
 
 
         self.inputs_dataframes = {}
@@ -403,7 +403,7 @@ class Wheat_wrapper(object):
 
         # read adelwheat inputs at t0
         self.adel_wheat = AdelDyn(seed=1, scene_unit="m", leaves=echap_leaves(xy_model="Soissons_byleafclass"))
-        self.g = self.adel_wheat.load(dir=in_folder)
+        self.g = self.adel_wheat.load(directory=in_folder)
 
         # ---------------------------------------------
         # ----- CONFIGURATION OF THE WRAPPERS -------
@@ -958,7 +958,7 @@ class Wheat_wrapper(object):
                     # run ElongWheat
                     Tair, Tsoil = self.meteo.loc[t_elongwheat, ["air_temperature", "soil_temperature"]]
 
-                    self.tillers_replications = elongwheat_tillering.update_tiller_replications(
+                    self.tillers_replications,log = elongwheat_tillering.update_tiller_replications(
                         g=self.g,
                         adel_wheat=self.adel_wheat,
                         plant_density=self.plant_density[1],
@@ -968,6 +968,16 @@ class Wheat_wrapper(object):
                         coef_buffer_til=self.COEF_BUFFER_TIL,
                         GAIp = self.GAIp
                     )   
+
+                    row = {
+                        't': t_light,
+                        'GAIp': log['GAIp']
+                    }
+                    # On aplatit les talles : row['T1'] = True, row['T2'] = False, ...
+                    for tiller_name, tiller_info in log['tillers'].items():
+                        row[tiller_name] = tiller_info['in_window']
+
+                    self.tiller_window_history.append(row)
 
                     self.elongwheat_facade_.run(Tair, Tsoil, option_static=self.option_static, tillers_replications=self.tillers_replications)
 
@@ -1087,6 +1097,10 @@ class Wheat_wrapper(object):
                 save_df_to_csv(outputs_df, data_filepath, PRECISION)
                 outputs_file_basename = outputs_filename.split(".")[0]
                 outputs_df_dict[outputs_file_basename] = outputs_df.reset_index()
+
+
+                df_in_window = pandas.DataFrame(self.tiller_window_history)
+                df_in_window.to_csv("tiller_in_window_evolution.csv", index=False)
 
         # ---------------------------------------------
         # -----      POST-PROCESSING      -------

@@ -10,8 +10,8 @@ import pandas
 import math
 import statsmodels.api as sm
 
-from alinea.adel.adel_dynamic import AdelDyn
-from alinea.adel.echap_leaf import echap_leaves
+from openalea.adel.adel_dynamic import AdelDyn
+from openalea.adel.echap_leaf import echap_leaves
 
 from lightvegemanager.stems import extract_stems_from_MTG
 
@@ -210,6 +210,7 @@ class Wheat_wrapper(object):
         self.global_index = indexer.global_order.index(name)
         self.wheat_index = indexer.wheat_names.index(name)
 
+        # Define default plant density (culm m-2)
         self.nb_plants = planter.number_of_plants[self.global_index]
         if name in planter.plant_density:
             self.plant_density = {1: planter.plant_density[name]}
@@ -217,6 +218,7 @@ class Wheat_wrapper(object):
             self.plant_density = planter.plant_density
         self.generation_type = planter.generation_type
 
+        # Define the time step in hours for each simulator
         self.LIGHT_TIMESTEP = LIGHT_TIMESTEP
         self.SENESCWHEAT_TIMESTEP = SENESCWHEAT_TIMESTEP
         self.FARQUHARWHEAT_TIMESTEP = FARQUHARWHEAT_TIMESTEP
@@ -224,6 +226,7 @@ class Wheat_wrapper(object):
         self.GROWTHWHEAT_TIMESTEP = GROWTHWHEAT_TIMESTEP
         self.CNWHEAT_TIMESTEP = CNWHEAT_TIMESTEP
 
+        # Name of the CSV files which will contain the outputs of the model
         self.AXES_OUTPUTS_FILENAME = AXES_OUTPUTS_FILENAME
         self.ORGANS_OUTPUTS_FILENAME = ORGANS_OUTPUTS_FILENAME
         self.HIDDENZONES_OUTPUTS_FILENAME = HIDDENZONES_OUTPUTS_FILENAME
@@ -251,19 +254,20 @@ class Wheat_wrapper(object):
             create_child_folder(self.out_folder, "graphs")
 
         if external_soil_model:
-            SOILS_INITIAL_STATE_FILENAME = None
+            #SOILS_INITIAL_STATE_FILENAME = None
             self.rootdistribtype = rootdistribtype
+            wheat_paramp = read_plant_param(os.path.normpath(SOIL_PARAMETERS_FILENAME), SOIL_PARAMETERS_SHEETNAME)
+            self.soil_parameters = [wheat_paramp] * self.nb_plants
             
-            if nitrates_uptake_forced:
-                nitrates_uptake_data_filepath = os.path.join(in_folder, NITRATES_UPTAKE_FORCINGS_FILENAME)
-                nitrates_uptake_data_df = pandas.read_csv(nitrates_uptake_data_filepath)
-                self.nitrates_uptake_data_grouped = nitrates_uptake_data_df.groupby(
-                    cnwheat_simulation.Simulation.ORGANS_T_INDEXES
-                )
+        
+        if external_soil_model and self.nitrates_uptake_forced:
+            nitrates_uptake_data_filepath = os.path.join(in_folder, NITRATES_UPTAKE_FORCINGS_FILENAME)
+            nitrates_uptake_data_df = pandas.read_csv(nitrates_uptake_data_filepath)
+            self.nitrates_uptake_data_grouped = nitrates_uptake_data_df.groupby(
+                cnwheat_simulation.Simulation.ORGANS_T_INDEXES)
+            
 
-            else:
-                wheat_paramp = read_plant_param(os.path.normpath(SOIL_PARAMETERS_FILENAME), SOIL_PARAMETERS_SHEETNAME)
-                self.soil_parameters = [wheat_paramp] * self.nb_plants
+
 
         self.inputs_dataframes = {}
         new_start_time = -1
@@ -281,7 +285,7 @@ class Wheat_wrapper(object):
                     continue
                 previous_outputs_dataframe = pandas.read_csv(os.path.join(out_folder, outputs_filename))
                 # Convert NaN to None
-                previous_outputs_dataframes[outputs_filename] = previous_outputs_dataframe.replace({numpy.nan: None})
+                previous_outputs_dataframes[outputs_filename] = previous_outputs_dataframe.where(previous_outputs_dataframe.notnull(), None)
 
                 assert "t" in previous_outputs_dataframes[outputs_filename].columns
 
@@ -330,7 +334,7 @@ class Wheat_wrapper(object):
                 if not inputs_filename:
                     continue
                 inputs_dataframe = pandas.read_csv(os.path.join(in_folder, inputs_filename))
-                self.inputs_dataframes[inputs_filename] = inputs_dataframe.replace({numpy.nan: None})
+                self.inputs_dataframes[inputs_filename] = inputs_dataframe.where(inputs_dataframe.notnull(), None)
 
         # Start time of the simulation
         self.start_time = max(0, new_start_time)
@@ -369,7 +373,7 @@ class Wheat_wrapper(object):
 
         # read adelwheat inputs at t0
         self.adel_wheat = AdelDyn(seed=1, scene_unit="m", leaves=echap_leaves(xy_model="Soissons_byleafclass"))
-        self.g = self.adel_wheat.load(dir=in_folder)
+        self.g = self.adel_wheat.load(directory=in_folder)
 
         # ---------------------------------------------
         # ----- CONFIGURATION OF THE wrapperS -------
@@ -583,6 +587,16 @@ class Wheat_wrapper(object):
 
         # -- CNWHEAT --
         # Initial states
+        cnwheat_axes_initial_state = self.inputs_dataframes[AXES_INITIAL_STATE_FILENAME][
+            [
+                i
+                for i in cnwheat_facade.cnwheat_converter.AXES_VARIABLES
+                if i in self.inputs_dataframes[AXES_INITIAL_STATE_FILENAME].columns
+            ]
+        ].copy()
+                
+
+
         cnwheat_organs_initial_state = self.inputs_dataframes[ORGANS_INITIAL_STATE_FILENAME][
             [
                 i
@@ -607,16 +621,15 @@ class Wheat_wrapper(object):
             ]
         ].copy()
 
-        if not external_soil_model:
-            cnwheat_soils_initial_state = self.inputs_dataframes[SOILS_INITIAL_STATE_FILENAME][
-                [
-                    i
-                    for i in cnwheat_facade.cnwheat_converter.SOILS_VARIABLES
-                    if i in self.inputs_dataframes[SOILS_INITIAL_STATE_FILENAME].columns
-                ]
-            ].copy()
-        else:
-            cnwheat_soils_initial_state = None
+
+        cnwheat_soils_initial_state = self.inputs_dataframes[SOILS_INITIAL_STATE_FILENAME][
+            [
+                i
+                for i in cnwheat_facade.cnwheat_converter.SOILS_VARIABLES
+                if i in self.inputs_dataframes[SOILS_INITIAL_STATE_FILENAME].columns
+            ]
+        ].copy()
+
 
         # update parameters if specified
         if update_parameters_all_models and "cnwheat" in update_parameters_all_models:
@@ -630,6 +643,7 @@ class Wheat_wrapper(object):
             CNWHEAT_TIMESTEP * self.HOUR_TO_SECOND_CONVERSION_FACTOR,
             self.plant_density,
             update_parameters_cnwheat,
+            cnwheat_axes_initial_state,
             cnwheat_organs_initial_state,
             cnwheat_hiddenzones_initial_state,
             cnwheat_elements_initial_state,
@@ -908,7 +922,7 @@ class Wheat_wrapper(object):
                 ):
                     # run ElongWheat
                     Tair, Tsoil = self.meteo.loc[t_elongwheat, ["air_temperature", "soil_temperature"]]
-                    self.elongwheat_facade_.run(Tair, Tsoil, option_static=self.option_static)
+                    self.elongwheat_facade_.run(Tair, Tsoil, option_static=self.option_static, tillers_replications=self.tillers_replications)
 
                     # update geometry
                     self.adel_wheat.update_geometry(self.g)

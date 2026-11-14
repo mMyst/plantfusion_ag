@@ -1,12 +1,12 @@
-from plantfusion.new_wheat_wrapper import Wheat_wrapper
+from plantfusion.adel_wheat_wrapper import Wheat_wrapper
 from plantfusion.l_egume_wrapper import L_egume_wrapper
 from plantfusion.light_wrapper import Light_wrapper
 from plantfusion.soil_wrapper import Soil_wrapper
 from plantfusion.indexer import Indexer
-from plantfusion.planter import Planter
+from plantfusion.planter import Planter, grid_pattern
 from elongwheat import tillering as elongwheat_tillering
 
-
+import numpy as np
 import time
 import datetime
 import os
@@ -34,14 +34,15 @@ def simulation(
     legume_name = "legume"
     indexer = Indexer(global_order=[legume_name, wheat_name], wheat_names=[wheat_name], legume_names=[legume_name])
 
-    tillers_replications = {"T1": 0.5, "T2": 0.5, "T3": 0.5, "T4": 0.5}
+    tillers_replications = {"T1": 0.5, "T2": 0.5, "T3": 0.5, "T4": 0.5, "T5": 0.5}
  
     sky = "turtle46"
-    RERmax_vegetative_stages_example = {
-        "elongwheat": {
-            "RERmax": {5: 3.35e-06, 6: 2.1e-06, 7: 2.0e-06, 8: 1.83e-06, 9: 1.8e-06, 10: 1.65e-06, 11: 1.56e-06}
-        }
-    }
+    # RERmax_vegetative_stages_example = {
+    #     "elongwheat": {
+    #         "RERmax": {5: 3.35e-06, 6: 2.1e-06, 7: 2.0e-06, 8: 1.83e-06, 9: 1.8e-06, 10: 1.65e-06, 11: 1.56e-06}
+    #     }
+    # }
+    RERmax_vegetative_stages_example = None
     senescwheat_timestep = 1
     light_timestep = 4
   
@@ -57,14 +58,21 @@ def simulation(
     offset = {wheat_name: 0.15*2, legume_name: 0}
     noise = {wheat_name:0.001,legume_name:0.01}
 
+
+    domain, full_grid = grid_pattern(
+        n_cols=n_cols, 
+        n_rows=n_rows, 
+        cell_size=cell_size, 
+        col_pattern=col_pattern, 
+        noise=None
+    )
+
     
     planter = Planter(indexer=indexer, 
-                      generation_type='grid_forced',
-                      n_rows=n_rows,
-                      n_cols= n_cols,
-                      cell_size=cell_size,
-                      col_pattern=col_pattern,
-                      save_wheat_positions=True)
+                      generation_type='forced',
+                      save_wheat_positions=True,
+                      positions_grid=full_grid,
+                      domain = domain)
 
 
     legume = L_egume_wrapper(
@@ -79,6 +87,7 @@ def simulation(
         caribu_scene=True
     )
 
+       
     wheat = Wheat_wrapper(
         in_folder=in_folder_wheat,
         out_folder=out_folder,
@@ -94,7 +103,9 @@ def simulation(
         SOIL_PARAMETERS_FILENAME="inputs_soil_legume/Parametres_plante_exemple.xls",
         AXES_INITIAL_STATE_FILENAME="axes_initial_state.csv",
         HIDDENZONES_INITIAL_STATE_FILENAME="hiddenzones_initial_state.csv",
-        rootdistribtype=wheatroot_type
+        MANAGEMENT_FILENAME="management_zsowing.csv",
+        rootdistribtype=wheatroot_type,
+        gaic=0.07
     )
 
     lighting = Light_wrapper(
@@ -117,7 +128,10 @@ def simulation(
                         planter=planter, 
                         opt_residu=0, 
                         save_results=True)
-    
+
+
+    histo_restrans_caribu = []
+
     ##################
     ### SIMULATION ###
     ##################
@@ -141,6 +155,9 @@ def simulation(
 
             scene_legume = legume.light_inputs(elements="triangles")
             lighting.run(scenes=[scene_legume], day=legume.doy(), parunit="RG")
+
+
+
             legume.light_results(legume.energy(), lighting)
 
             (
@@ -158,6 +175,7 @@ def simulation(
             )
             legume.soil_results(soil.results, planter)
 
+            histo_restrans_caribu.append(legume.res_trans.copy())
             legume.run()
 
             t_legume += 1
@@ -168,14 +186,22 @@ def simulation(
 
         wheat_t_count = 0
         wheat_day_count = 0
+        light_run_count = 0
         
 
         #compute GAIp using total triangle area stored in LVM and domain area from planter
-        wheat.GAIp =  lighting.light.totaltrianglearea / lighting.domain_area
+        # wheat.GAIp =  lighting.light.totaltrianglearea / lighting.domain_area
+        # wheat.GAIp = elongwheat_tillering.compute_local_GAIp(
+        #     scene = lighting.light._LightVegeManager__complete_trimesh, #__geometry["scenes"],
+        #     radius = 0.10,
+        #     target_point=(0.15, 0.15, 0.0),
+        #     xy_only = True
+        # )
 
         for t_wheat in range(wheat.start_time,wheat.start_time +simulation_length, wheat.SENESCWHEAT_TIMESTEP):
             wheat_t_count += 1
-            print("cn_wheat timestep : "+str(wheat_t_count))
+            print("cn_wheat timestep : "+str(wheat_t_count)+"/"+str(simulation_length))
+
                 
             activate_legume = wheat.doy(t_wheat) != wheat.next_day_next_hour(t_wheat)
             daylight = (t_wheat % light_timestep == 0) and (wheat.PARi_next_hours(t_wheat) > 0)
@@ -186,14 +212,20 @@ def simulation(
                     legume.derive(t_legume)
 
                 lighting.writegeo=False
-                if t_legume%geostep == 0 :
+                if light_run_count%geostep == 0 :
                     lighting.writegeo=True 
 
                 wheat_input, stems = wheat.light_inputs(planter)
                 legume_input = legume.light_inputs(elements="triangles")
                 scenes = indexer.light_scenes_mgmt({wheat_name : wheat_input, legume_name : legume_input})
 
-                wheat.GAIp = lighting.light.totaltrianglearea / lighting.domain_area
+                # wheat.GAIp = lighting.light.totaltrianglearea / lighting.domain_area
+                wheat.GAIp = elongwheat_tillering.compute_local_GAIp(
+                    scene = lighting.light.to_plantGL(),
+                    radius = 0.10,
+                    target_point=(0.125, 0.125, 0.0),
+                    xy_only = True
+                    )  
 
                 lighting.run(
                     scenes=scenes,
@@ -202,6 +234,8 @@ def simulation(
                     parunit="RG",
                     stems=stems
                 )
+                light_run_count+=1
+
                 if daylight:
                     wheat.light_results(energy=wheat.energy(t_wheat), lighting=lighting)
 
@@ -238,6 +272,7 @@ def simulation(
                     wheat.soil_results(soil.results[4], planter=planter)
                     legume.soil_results(soil.results)
 
+                    histo_restrans_caribu.append(legume.res_trans.copy())
                     legume.run()
                     t_legume += 1
 
@@ -251,19 +286,24 @@ def simulation(
         wheat.end(run_postprocessing=run_postprocessing, run_graphs=run_graphs)
         soil.end()
 
+        np.save(os.path.join(os.path.normpath(out_folder),"historique_restrans_caribu.npy"), np.array(histo_restrans_caribu))
+
+
 
 if __name__ == "__main__":
-    in_folder_legume = "inputs_soil_legume" #debut luzerne le 30/09/2024
+    in_folder_legume = "inputs_soil_legume" #debut luzerne le 30/09/2024 => avancé au 24 septembre (doy 269) pour fitter l'apparition des feuilles
     in_folder_wheat = "inputs_fspmwheat"
-    out_folder = "outputs/WheatLuz_LUBBAC_emergence"
-    start_wheat='18/11/2024' #semis au 18/11/2024, 3 feuilles au 07/01/2025 d'après données. 31/12/2024 pour éviter pb doy, t init = 2904
-    simulation_length = 3370
-    id_usm = 2 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale
+    out_folder = "outputs/WheatLuz_LUBBAC_VertLeaf_03_wiggle200"
+    start_wheat='18/11/2024' #semis au 18/11/2024, 3 feuilles au 07/01/2025 d'après données.
+    simulation_length = 3430 #3370 = meme cumul thermique que référence. 3430 = arrêt à la fermeture du couvert blé d'après scan eric (09/04/2025)
+    id_usm=2 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale, all with perfect irrigation
+    #11 reg meteo capteurs, #12 noreg  TODO : add accurate irrigation
+    #21 22 for K type alfalfa
     writegeo = True
-    geostep = 1
+    geostep = 10
     run_postprocessing = True
     run_graphs = True
     simulation(in_folder_legume, in_folder_wheat, out_folder, 
-               start_wheat, simulation_length, id_usm, min_depth=0.2,
+               start_wheat, simulation_length, id_usm, min_depth=0.01,
                writegeo=writegeo, geostep=geostep, 
                run_graphs=run_graphs, run_postprocessing=run_postprocessing)
