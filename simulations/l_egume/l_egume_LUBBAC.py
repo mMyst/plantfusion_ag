@@ -5,7 +5,7 @@ from plantfusion.planter import Planter
 from plantfusion.indexer import Indexer
 from plantfusion.utils import create_child_folder
 
-import numpy
+import numpy as np
 import os
 import time
 import datetime
@@ -35,7 +35,7 @@ def simulation(in_folder, onglet, config_file, out_folder, id_usm, write_geo=Fal
     ###PLANTER
            # Définir les paramètres d'entrée
     col_pattern = ("inter_row", "inter_row",legume_name, legume_name, "inter_row", "inter_row")
-    col_pattern = (legume_name,legume_name,legume_name,legume_name,legume_name,legume_name)
+    #col_pattern = (legume_name,legume_name,legume_name,legume_name,legume_name,legume_name)
 
     n_rows = 6
     n_cols = 6
@@ -86,6 +86,7 @@ def simulation(in_folder, onglet, config_file, out_folder, id_usm, write_geo=Fal
                                save_results= True)
 
 
+    histo_restrans_caribu = []
 
     try:
         current_time_of_the_system = time.time()
@@ -123,6 +124,7 @@ def simulation(in_folder, onglet, config_file, out_folder, id_usm, write_geo=Fal
             )
             legume_caribu.soil_results(soil_caribu.results, planter)
 
+            histo_restrans_caribu.append(legume_caribu.res_trans.copy())
             legume_caribu.run()
 
             print("Lighting running time | CARIBU: ", caribu_time)
@@ -134,15 +136,18 @@ def simulation(in_folder, onglet, config_file, out_folder, id_usm, write_geo=Fal
         legume_caribu.end()
         soil_caribu.end()  
 
+        np.save(os.path.join(os.path.normpath(out_folder),"historique_restrans_caribu.npy"), np.array(histo_restrans_caribu))
+
 
 
 
 if __name__ == "__main__":
-    in_folder = "inputs_soil_legume"
-    out_folder = "outputs/legume_LUBBAC_allfixed"
+    in_folder = "inputs_soil_legume" 
+    out_folder = "outputs/legume_LUBBAC_testparam"
     config_file = 'liste_usms_couplage.xls'
-    onglet='LUBBAC' #repiquage le 30/09, départ de la sim
-    id_usm=12 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale, all with perfect irrigation
+    onglet='LUBBAC' #repiquage le 30/09, départ de la sim => avancé au 24 septembre (doy 269) pour fitter l'apparition des feuilles
+    id_usm=2 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale, all with perfect irrigation
+    #11 reg meteo capteurs, #12 noreg  TODO : add accurate irrigation
     write_geo=True
     geostep=1
 

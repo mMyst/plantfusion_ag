@@ -108,7 +108,7 @@ def simulation(in_folder, out_folder, id_usm, write_geo=False):
 
 if __name__ == "__main__":
     in_folder = "inputs_soil_legume"
-    out_folder = "outputs/legume_caribu_buggrid"
+    out_folder = "outputs/legume_caribu_171103"
     write_geo = False
 
-    simulation(in_folder, out_folder, 1711, write_geo)
+    simulation(in_folder, out_folder, 171103, write_geo)

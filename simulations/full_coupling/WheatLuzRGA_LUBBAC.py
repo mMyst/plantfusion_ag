@@ -292,8 +292,9 @@ if __name__ == "__main__":
     start_wheat='31/12/2024' #semis au 18/11/2024, 3 feuilles au 07/01/2025 d'après données. 31/12/2024 pour éviter pb doy, t init = 2904
     config_file = 'liste_usms_couplage.xls'
     simulation_length = 2500
-    onglet='LUBBAC' #repiquage le 30/09, départ de la sim
-    id_usm=2 #1 T1mbale reg, 2 Timbale unreg
+    onglet='LUBBAC' #repiquage le 30/09, départ de la sim => avancé au 24 septembre (doy 269) pour fitter l'apparition des feuilles
+    id_usm=2 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale, all with perfect irrigation
+    #11 reg meteo capteurs, #12 noreg  TODO : add accurate irrigation
     rga_usm=7 #RGA unreg 7, RGA reg 8 
     writegeo=True
     geostep=10

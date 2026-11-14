@@ -21,6 +21,7 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=4000, w
 
 
     N_fertilizations = {2949: 357143, 4029: 1000000} #22 février et 1er avril
+    #N_fertilizations = {'constant_Conc_Nitrates' : 357143} #50 UA constant dans le sol 
     tillers_replications = {"T1": 0.5, "T2": 0.5, "T3": 0.5, "T4": 0.5}
     plant_density = {1: 250}
     sky = "turtle46"
@@ -69,6 +70,7 @@ def simulation(in_folder, out_folder,start_wheat=None, simulation_length=4000, w
                 wheat_input, stems = wheat.light_inputs(planter)
                 lighting.run(scenes=[wheat_input], day=wheat.doy(t), hour=wheat.hour(t), parunit="micromol.m-2.s-1", stems=stems)
                 wheat.light_results(energy=wheat.energy(t), lighting=lighting)
+
             
             print("Step "+ str(t-wheat.start_time)+"/"+str(simulation_length))
             wheat.run(t)
@@ -84,7 +86,7 @@ if __name__ == "__main__":
     in_folder = "inputs_fspmwheat"
     out_folder = "outputs/cnwheat_default_emergence"
     start_wheat = None
-    simulation_length = 4000
+    simulation_length = 500
     write_geo = True
     run_postprocessing=True
     run_graphs=True

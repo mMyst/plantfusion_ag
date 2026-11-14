@@ -209,7 +209,7 @@ if __name__ == "__main__":
     out_folder = "outputs/LuzRGA_LUBBAC"
     config_file = 'liste_usms_couplage.xls'
     onglet='LUBBAC' #repiquage le 30/09, départ de la sim
-    id_usm=2 #1 Timbale reg, 2 Timbale unreg
+    id_usm=2 #1 Timbale reg, 2 Timbale unreg     #11 reg meteo capteurs, #12 noreg meteo capteurs
     rga_usm=7 #RGA unreg 7, RGA reg 8 
     write_geo=True
     geostep=10

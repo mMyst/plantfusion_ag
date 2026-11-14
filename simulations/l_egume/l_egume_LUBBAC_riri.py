@@ -145,7 +145,7 @@ if __name__ == "__main__":
     config_file = 'liste_usms_couplage.xls'
     onglet='LUBBAC' #repiquage le 30/09, départ de la sim
     id_usm=12 #1 with reg, 2 without reg, 3 without reg and default aflalfa instead of timbale, all with perfect irrigation
-    #TODO #11 reg meteo capteurs, #12 noreg meteo capteurs
+    #11 reg meteo capteurs, #12 noreg meteo capteurs
     write_geo=True
     geostep=10
 

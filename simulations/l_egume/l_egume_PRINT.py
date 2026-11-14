@@ -5,6 +5,8 @@ from plantfusion.soil_wrapper import Soil_wrapper
 from plantfusion.planter import Planter
 from plantfusion.utils import coord_from_image
 
+from lightvegemanager.VTK import VTKtriangles
+
 from PIL import Image
 
 
@@ -30,12 +32,13 @@ def simulation(in_folder, out_folder, id_usm, writegeo, image_path):
     
     image=Image.open(image_path)
 
-    mod_img, img_coords = coord_from_image(image, n_colors=2, n_side=300,convert_mode='nb',scale=10**-3)
+    mod_img, img_coords = coord_from_image(image, n_colors=2, n_side=150,convert_mode='nb',scale=10**-3)
 
+    # mod_img, img_coords = coord_from_image(image, n_colors=2, n_side=100,convert_mode='portrait',scale=10**-3)
 
     # Rename the first key to 'legume'
     old_key_l = list(img_coords.keys())[1]
-    old_key_w = list(img_coords.keys())[0]
+    old_key_l2 = list(img_coords.keys())[0]
     img_coords[legume_name] = img_coords.pop(old_key_l)
     #img_coords['legumeB'] = img_coords.pop(old_key_w)
     #delete any item that doesn't have a name in indexer.global_order to get rid of unused coordinates
@@ -58,9 +61,11 @@ def simulation(in_folder, out_folder, id_usm, writegeo, image_path):
         planter=planter,
         caribu_scene= True
     )
+
+    legume.lsystem.opt_Trud = 1 #jolies feuilles
     
     lighting = Light_wrapper(
-        lightmodel="caribu", 
+        lightmodel="ratp", 
         out_folder=out_folder, 
         sky='turtle46',
         planter=planter, 
@@ -70,7 +75,19 @@ def simulation(in_folder, out_folder, id_usm, writegeo, image_path):
         infinite=False
     )
 
-    soil = Soil_wrapper(out_folder=out_folder, ongletconfigfile=onglet, legume_wrapper=legume, legume_pattern=True)
+
+    light_mesh = Light_wrapper(
+        lightmodel="caribu", 
+        out_folder=out_folder, 
+        sky='turtle46',
+        planter=planter, 
+        indexer=indexer,
+        legume_wrapper=legume,
+        writegeo=True,
+        infinite=False
+    )
+
+    soil = Soil_wrapper(out_folder=out_folder, ongletconfigfile=onglet, legume_wrapper=legume, legume_pattern=True, planter= planter)
 
     try:
         current_time_of_the_system = time.time()
@@ -78,9 +95,27 @@ def simulation(in_folder, out_folder, id_usm, writegeo, image_path):
 
             legume.derive(t)
 
-            scene_legume = legume.light_inputs(elements="triangles")
+            scene_legume = legume.light_inputs(elements="voxels")
+            mesh_legume = legume.light_inputs(elements = "triangles")
+
+
+            # VTKtriangles(mesh_legume, filename= file_name)
+                        
             lighting.run(scenes=[scene_legume], energy=legume.energy(), day=legume.doy(), parunit="RG")
             legume.light_results(legume.energy(), lighting)
+
+            #saving the trimesh
+            
+            file_name = os.path.join(os.path.normpath(out_folder), "light","vtk", "plantfusion_")
+
+            geometry = {"scenes": [mesh_legume], "domain": light_mesh.domain, "transformations": light_mesh.transformations, "stems id": None}
+            light_mesh.light.build(geometry)
+            light_mesh.light.to_VTK(lighting= False, path = file_name, i = t, printvoxels=False)
+
+            # if light_mesh.light.__totalarea >0 : 
+                # VTKtriangles(light_mesh.light.__complete_trimesh, filename= file_name)
+
+    
 
             (
                 N_content_roots_per_plant,
@@ -88,6 +123,7 @@ def simulation(in_folder, out_folder, id_usm, writegeo, image_path):
                 plants_soil_parameters,
                 plants_light_interception,
             ) = legume.soil_inputs()
+
             soil.run(
                 legume.doy(),
                 [N_content_roots_per_plant],
@@ -108,11 +144,11 @@ def simulation(in_folder, out_folder, id_usm, writegeo, image_path):
 
 if __name__ == "__main__":
     in_folder = "inputs_soil_legume"
-    image_path = 'C:\\Users\\agrumel\\Pictures\\Saved Pictures\\urp3f.png'
+    image_path = "C:/Users/agrumel/Pictures/Saved Pictures/nicolas.jpg"
     out_folder = "outputs/legume_PRINT/"+ Path(image_path).stem
-    onglet='LUCOS'
+    onglet='PRINT'
     id_usm = 1
-    writegeo = True
+    writegeo = False
     
 
 
